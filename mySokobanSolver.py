@@ -28,6 +28,8 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 # You have to make sure that your code works with
 # the files provided (search.py and sokoban.py) as your code will be tested
 # with these files
+from math import floor
+
 import search
 import sokoban
 
@@ -146,9 +148,30 @@ def check_elem_action_seq(warehouse, action_seq):
                string returned by the method  Warehouse.__str__()
     """
 
-    ##         "INSERT YOUR CODE HERE"
+    ## LEGAL CONDITIONS:
+    ##  Cant walk through wall
+    ##  Cant push box through wall
+    ##  Cant push two boxes at same time
 
-    raise NotImplementedError()
+    for move in action_seq:
+        if move == "Up":
+            coordinate_change = (0, -1)
+        elif move == "Down":
+            coordinate_change = (0, 1)
+        elif move == "Left":
+            coordinate_change = (-1, 0)
+        elif move == "Right":
+            coordinate_change = (1, 0)
+        explore_tile = (warehouse.worker[0] + coordinate_change[0], warehouse.worker[1] + coordinate_change[1]) #One tile ahead
+        if binary_tuple_search(explore_tile, warehouse.walls) != -1:   #If wall
+            return 'Impossible'
+        if binary_tuple_search(explore_tile, warehouse.boxes) != -1:   #If box
+            explore_more = (explore_tile[0] + coordinate_change[0], explore_tile[1] + coordinate_change[1])  #One tile further ahead
+            if binary_tuple_search(explore_more, warehouse.walls) != -1 or binary_tuple_search(explore_more, warehouse.boxes) != -1: #If wall OR box
+                return 'Impossible'
+            warehouse.boxes[binary_tuple_search(explore_tile, warehouse.boxes)] = explore_more #Push box: Replace explore_tile with explore_more
+        warehouse.worker = explore_tile # move player forward
+    print(warehouse) # Return string representing state of warehouse after applying sequence of actions
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -182,3 +205,77 @@ def solve_weighted_sokoban(warehouse):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def binary_tuple_search(target, list):
+    """
+    Binary Tuple Search (More efficiently searches for a given tuple in an array of tuples)
+
+    @param target: a coordinate tuple E.g. (4,2)
+
+    @param list: a list of coordinate tuples E.g. [(3,6),(1,5),(4,3),(6,4),(3,5)]
+
+    @return: index of target in list, -1 if not present
+    """
+
+    l = 0
+    r = len(list) - 1
+    while l <= r:
+        m = (l + r) // 2
+        if target == list[m]:
+            return m
+        elif target[::-1] > list[m][::-1]:
+            l = m + 1
+        else:
+            r = m - 1
+    return -1
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+if __name__ == "__main__":
+
+    wh = sokoban.Warehouse()
+    wh.load_warehouse("./warehouses/warehouse_03.txt")
+
+    ### TEST binary_tuple_search
+    # print(binary_tuple_search((0, 5), wh.walls))  # Present (Middle)
+    # print(binary_tuple_search((6, 2), wh.walls))  # Not Present
+    # print(binary_tuple_search((2, 0), wh.walls))  # Present (Start)
+    # print(binary_tuple_search((8, 5), wh.walls))  # Present (End)
+
+    ### TEST check_elem_action_seq
+    # ## UP ACTION
+    # ..... # Legal (Move to empty square)
+    # ..... # Legal (Push box)
+    # ..... # Illegal (Walk into wall)
+    # ..... # Illegal (Push box into wall)
+    # ..... # Illegal (Push two boxes)
+
+    # ## DOWN ACTION
+    # ..... # Legal (Move to empty square)
+    # ..... # Legal (Push box)
+    # ..... # Illegal (Walk into wall)
+    # ..... # Illegal (Push box into wall)
+    # ..... # Illegal (Push two boxes)
+
+    # ## LEFT ACTION
+    # ..... # Legal (Move to empty square)
+    # ..... # Legal (Push box)
+    # ..... # Illegal (Walk into wall)
+    # ..... # Illegal (Push box into wall)
+    # ..... # Illegal (Push two boxes)
+
+    # ## RIGHT ACTION
+    # ..... # Legal (Move to empty square)
+    # ..... # Legal (Push box)
+    # ..... # Illegal (Walk into wall)
+    # ..... # Illegal (Push box into wall)
+    # ..... # Illegal (Push two boxes)
+
+    # ## MULTIPLE ACTIONS
+    # sequence1 = ["Left", "Down", "Down", "Right", "Up", "Down"]
+    # print(check_elem_action_seq(wh, sequence1)) # Legal (Push box to target)
+
+    # sequence2 = ["Right", "Up", "Up", "Left", "Left", "Left", "Down", "Down", "Left", "Left", "Left", "Up", "Up", "Right", "Right", "Up", "Right", "Down", "Down"]
+    # print(check_elem_action_seq(wh, sequence2)) # Legal (Push box to target)
+    
