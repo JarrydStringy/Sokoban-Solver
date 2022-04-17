@@ -42,8 +42,8 @@ def my_team():
     """
     return [
         (10543473, "Tarrant", "Cauchi"),
-        (00000000, "Grace", "Hopper"),
-        (00000000, "Eva", "Tardos"),
+        (10543473, "Tarrant", "Cauchi"),
+        (10543473, "Tarrant", "Cauchi"),
     ]
 
 
