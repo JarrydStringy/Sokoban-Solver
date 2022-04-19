@@ -44,14 +44,12 @@ def my_team():
     """
     return [
         (10543473, "Tarrant", "Cauchi"),
-        (10543473, "Tarrant", "Cauchi"),
-        (10543473, "Tarrant", "Cauchi"),
+        (9734074, "Jarryd", "Stringfellow"),
+        (123, "First", "Last"),
     ]
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
 def taboo_cells(warehouse):
     """
     Identify the taboo cells of a warehouse. A "taboo cell" is by definition
@@ -77,14 +75,93 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     """
-    ##         "INSERT YOUR CODE HERE"
-    raise NotImplementedError()
-
-    # Use itertools.combination for finding the corners
-    # adjacent to a wall between 2 corners
-    # adapt sokoban _str_
-
-
+    
+    #Cells in the grid
+    taboo = 'X'
+    wall = '#'
+    targets = ['.', '!', '*']    
+    unwanted = ['$', '@']
+    
+    #Can use itertools.combination for finding the corners
+    #Checks if next to a wall on left/right and up/down
+    def Corner(warehouse, x, y, wall=False):
+        vertWalls = 0
+        horizWalls = 0
+        wall
+        #Check for walls above and below
+        for (dx, dy) in [(0, 1), (0, -1)]:
+            if warehouse[y + dy][x + dx] == wall:
+                vertWalls += 1
+        #Check for walls left and right
+        for (dx, dy) in [(1, 0), (-1, 0)]:
+            if warehouse[y + dy][x + dx] == wall:
+                horizWalls += 1
+        if wall:
+            return (vertWalls >= 1) or (horizWalls >= 1)
+        else:
+            return (vertWalls >= 1) and (horizWalls >= 1)
+    
+    #RULE 1: Check if a cell is a corner and not a target
+    def Rule1(warehouse):
+        inside = False                                  #Bool to check if inside or out
+        for y in range(len(warehouse) - 1):             #Columns
+            for x in range(len(warehouse) - 1):         #Rows
+                if not inside:
+                    if warehouse[y][x] == wall:         #If we have reached the wall
+                        inside = True                   #We are inside
+                else:
+                    if all([cell == ' ' for cell in warehouse[y][x:]]):
+                        break                           #We are back ouside
+                        
+                    if warehouse[y][x] not in targets:  #Can't be taboo if it is a target
+                        if warehouse[y][x] != wall:     #Or a wall
+                            if Corner(warehouse, x, y):
+                                warehouse[y][x] = taboo
+        return warehouse
+    
+    #RULE 2: Check if there are any target cells between two corners
+    def Rule2(warehouse):
+        for y in range(1, len(warehouse) - 1):                              #Col
+            for x in range(1, len(warehouse[0]) - 1):                       #Row
+                if warehouse[y][x] == taboo and Corner(warehouse, x, y):    #Needs to be inline with a corner
+                    row = warehouse[y][x + 1:]
+                    col = [row[x] for row in warehouse[y + 1:][:]]
+                    for x2 in range(len(row)):                              #Inner row
+                        if row[x2] in targets or row[x2] == wall:
+                            break                                           #Can't be a target or be a wall
+                        if row[x2] == taboo and Corner(warehouse, x2 + x + 1, y):
+                            if all([Corner(warehouse, x3, y, True) for x3 in range(x + 1, x2 + x + 1)]):
+                                for x4 in range(x + 1, x2 + x + 1):
+                                    warehouse[y][x4] = taboo
+                    for y2 in range(len(col)):                              #Inner col
+                        if col[y2] in targets or col[y2] == wall:
+                            break                                           #Can't be a target or be a wall
+                        if col[y2] == taboo and Corner(warehouse, x, y2 + y + 1):
+                            if all([Corner(warehouse, x, y3, True) for y3 in range(y + 1, y2 + y + 1)]):
+                                for y4 in range(y + 1, y2 + y + 1):
+                                    warehouse[y4][x] = taboo
+        return warehouse
+    
+    #convert warehouse to a string
+    wh_str = str(warehouse)
+    
+    #Clean the string by removing the boxes and players
+    for cell in unwanted:   #If it is in list
+        wh_clean = wh_str.replace(cell, ' ')    #replace with a blank
+    
+    #Rearange string to array to show full wh in 2D array
+    wh_array = [list(line) for line in wh_clean.split('\n')]    
+    
+    #Apply the 2 rules
+    wh_array = Rule1(wh_array)
+    wh_array = Rule2(wh_array)
+    
+    #Convert back into a 1D string
+    wh_str = '\n'.join([''.join(line) for line in wh_array])
+    
+    #Result
+    return wh_str
+    
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -162,15 +239,20 @@ def check_elem_action_seq(warehouse, action_seq):
             coordinate_change = (-1, 0)
         elif move == "Right":
             coordinate_change = (1, 0)
+            
         explore_tile = (warehouse.worker[0] + coordinate_change[0], warehouse.worker[1] + coordinate_change[1]) #One tile ahead
+        
         if binary_tuple_search(explore_tile, warehouse.walls) != -1:   #If wall
             return 'Impossible'
+        
         if binary_tuple_search(explore_tile, warehouse.boxes) != -1:   #If box
             explore_more = (explore_tile[0] + coordinate_change[0], explore_tile[1] + coordinate_change[1])  #One tile further ahead
             if binary_tuple_search(explore_more, warehouse.walls) != -1 or binary_tuple_search(explore_more, warehouse.boxes) != -1: #If wall OR box
                 return 'Impossible'
             warehouse.boxes[binary_tuple_search(explore_tile, warehouse.boxes)] = explore_more #Push box: Replace explore_tile with explore_more
+        
         warehouse.worker = explore_tile # move player forward
+    
     print(warehouse) # Return string representing state of warehouse after applying sequence of actions
 
 
