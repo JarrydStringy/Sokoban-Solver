@@ -281,7 +281,7 @@ def check_elem_action_seq(warehouse, action_seq):
         
         warehouse.worker = explore_tile # move player forward
     
-    print(warehouse) # Return string representing state of warehouse after applying sequence of actions
+    return warehouse.__str__() # Return string representing state of warehouse after applying sequence of actions
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

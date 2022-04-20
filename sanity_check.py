@@ -17,12 +17,13 @@ marking your code, make sure that your code runs without errors with this script
 
 from sokoban import Warehouse
 
-
 try:
-    from fredSokobanSolver import taboo_cells, solve_weighted_sokoban, check_elem_action_seq
+    from fredSokobanSolver import (check_elem_action_seq,
+                                   solve_weighted_sokoban, taboo_cells)
     print("Using Fred's solver")
 except ModuleNotFoundError:
-    from mySokobanSolver import taboo_cells, solve_weighted_sokoban, check_elem_action_seq
+    from mySokobanSolver import (check_elem_action_seq, solve_weighted_sokoban,
+                                 taboo_cells)
     print("Using submitted solver")
 
     
@@ -94,6 +95,6 @@ if __name__ == "__main__":
     pass    
 #    print(my_team())  # should print your team
 
-    test_taboo_cells() 
-    #test_check_elem_action_seq()
+    #test_taboo_cells() 
+    test_check_elem_action_seq()
     #test_solve_weighted_sokoban()
