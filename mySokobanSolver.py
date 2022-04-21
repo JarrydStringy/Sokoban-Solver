@@ -192,10 +192,8 @@ class SokobanPuzzle(search.Problem):
     #     You are allowed (and encouraged) to use auxiliary functions and classes
 
     def __init__(self, warehouse):
-        if warehouse:
-            self.state = warehouse
-
-        raise NotImplementedError()
+        assert len(warehouse.targets) >= len(warehouse.boxes)
+        self.initial = warehouse
 
     def actions(self, state):
         """
@@ -235,14 +233,28 @@ class SokobanPuzzle(search.Problem):
         is such that the path doesn't matter, this function will only look at
         state2.  If the path does matter, it will consider c and maybe state1
         and action. The default method costs 1 for every step in the path."""
+        # Cost should equal 1 + weight of box being moved if any
         return c + 1
 
     def h(self, n):
         """
         Heuristic for goal state
         """
-        raise NotImplementedError
+        misplaced = [i for i, element in enumerate(boxes) if element not in targets] # Find indicies of misplaced boxes
+        if misplaced:
+            misplaced_weights = [(element, i) for i, element in enumerate(weights) if i in misplaced] # Get weights and indicies of misplaced boxes
+            heaviest_misplaced_box = boxes[(max(misplaced_weights, key = lambda t: t[0]))[1]] # Retrive coordinates of heaviest box
+            
+            # Find closest empty target to heaviest box
+            empty_targets = [(element, i) for i, element in enumerate(targets) if element not in boxes]# Find empty targets
+            distance_to = [ (abs(element[0][0]-heaviest_misplaced_box[0]) + abs(element[0][1]-heaviest_misplaced_box[1]), element[1]) for element, element in enumerate(empty_targets)]  # Get distance of targets.
+            closest_empty_target = targets[(min(distance_to, key = lambda t: t[0]))[1]] # Retrieve closest empty target
 
+            worker_box = abs(n.state.worker[0]-heaviest_misplaced_box[0]) + abs(n.state.worker[1]-heaviest_misplaced_box[1]) # distance from worker to heaviest box (euclidean distance)
+            box_target = abs(heaviest_misplaced_box[0]-closest_empty_target[0]) + abs(heaviest_misplaced_box[1]-closest_empty_target[1]) # distance from heaviest box to closest target (euclidean distance)
+            return worker_box + box_target
+        else:
+            return 0
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -461,3 +473,25 @@ if __name__ == "__main__":
     ###
 
     ##### check_elem_action_seq TEST #####
+
+    ##### Weight Box Experiment #####
+    # wh.load_warehouse("./warehouses/warehouse_8a.txt")
+    # sequence = ['Right']
+    # print(check_elem_action_seq(wh, sequence))  # Legal (Move to empty space)
+
+
+    boxes = [(3, 2), (2, 3), (5, 4)]
+    targets = [(2, 3), (11, 3), (4, 8), (7, 2)]
+    weights = [84, 99, 1]
+
+    misplaced = [i for i, element in enumerate(boxes) if element not in targets]
+    misplaced_weights = [(element, i) for i, element in enumerate(weights) if i in misplaced]
+    heaviest_misplaced_box = boxes[(max(misplaced_weights, key = lambda t: t[0]))[1]]
+
+    empty_targets = [(element, i) for i, element in enumerate(targets) if element not in boxes]# Find empty targets
+    # Subtract heaviest_misplaced_box from each empty target coordinates to get absolute difference/eucclidean distance between heaviest box and each emtpyt target.
+    distance_to = [ (abs(element[0][0]-heaviest_misplaced_box[0]) + abs(element[0][1]-heaviest_misplaced_box[1]), element[1]) for element, element in enumerate(empty_targets)]
+    # Find closest empty target by getting minimum int of above list.
+    closest_empty_target = targets[(min(distance_to, key = lambda t: t[0]))[1]]
+    print(closest_empty_target)
+    print("")
