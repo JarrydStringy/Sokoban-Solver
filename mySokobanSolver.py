@@ -240,15 +240,15 @@ class SokobanPuzzle(search.Problem):
         """
         Heuristic for goal state
         """
-        misplaced = [i for i, element in enumerate(boxes) if element not in targets] # Find indicies of misplaced boxes
+        misplaced = [i for i, element in enumerate(n.state.boxes) if element not in n.state.targets] # Find indicies of misplaced boxes
         if misplaced:
-            misplaced_weights = [(element, i) for i, element in enumerate(weights) if i in misplaced] # Get weights and indicies of misplaced boxes
-            heaviest_misplaced_box = boxes[(max(misplaced_weights, key = lambda t: t[0]))[1]] # Retrive coordinates of heaviest box
+            misplaced_weights = [(element, i) for i, element in enumerate(n.state.weights) if i in misplaced] # Get weights and indicies of misplaced boxes
+            heaviest_misplaced_box = n.state.boxes[(max(misplaced_weights, key = lambda t: t[0]))[1]] # Retrive coordinates of heaviest box
             
             # Find closest empty target to heaviest box
-            empty_targets = [(element, i) for i, element in enumerate(targets) if element not in boxes]# Find empty targets
+            empty_targets = [(element, i) for i, element in enumerate(n.state.targets) if element not in n.state.boxes]# Find empty targets
             distance_to = [ (abs(element[0][0]-heaviest_misplaced_box[0]) + abs(element[0][1]-heaviest_misplaced_box[1]), element[1]) for element, element in enumerate(empty_targets)]  # Get distance of targets.
-            closest_empty_target = targets[(min(distance_to, key = lambda t: t[0]))[1]] # Retrieve closest empty target
+            closest_empty_target = n.state.targets[(min(distance_to, key = lambda t: t[0]))[1]] # Retrieve closest empty target
 
             worker_box = abs(n.state.worker[0]-heaviest_misplaced_box[0]) + abs(n.state.worker[1]-heaviest_misplaced_box[1]) # distance from worker to heaviest box (euclidean distance)
             box_target = abs(heaviest_misplaced_box[0]-closest_empty_target[0]) + abs(heaviest_misplaced_box[1]-closest_empty_target[1]) # distance from heaviest box to closest target (euclidean distance)
