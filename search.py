@@ -29,11 +29,10 @@ import sys
 # check the Python version is at least 3.5
 assert sys.version_info >= (3, 5)
 
-import itertools
+import collections  # for dequeue
 import functools
 import heapq
-
-import collections # for dequeue
+import itertools
 
 
 def memoize(fn, slot=None, maxsize=128):

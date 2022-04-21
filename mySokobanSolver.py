@@ -194,8 +194,10 @@ class SokobanPuzzle(search.Problem):
     #     You are allowed (and encouraged) to use auxiliary functions and classes
 
     def __init__(self, warehouse):
-        assert len(warehouse.targets) >= len(warehouse.boxes)
-        self.initial = warehouse
+        assert len(warehouse.targets) >= len(warehouse.boxes) # Check there are enough targets for all boxes
+        self.initial = tuple(warehouse.boxes), tuple(warehouse.worker)
+        self.problem = warehouse
+        
 
     def actions(self, state):
         """
@@ -203,13 +205,13 @@ class SokobanPuzzle(search.Problem):
 
         """
         L = []  # list of legal actions
-        if legal_check(state, 'Up') != 'Impossible':
+        if legal_check(self, state, 'Up') != 'Impossible':
             L.append('Up')
-        if legal_check(state, 'Down') != 'Impossible':
+        if legal_check(self, state, 'Down') != 'Impossible':
             L.append('Down')
-        if legal_check(state, 'Left') != 'Impossible':
+        if legal_check(self, state, 'Left') != 'Impossible':
             L.append('Left')
-        if legal_check(state, 'Right') != 'Impossible':
+        if legal_check(self, state, 'Right') != 'Impossible':
             L.append('Right')
 
         return L
@@ -219,15 +221,15 @@ class SokobanPuzzle(search.Problem):
         action in the given state. The action must be one of
         self.actions(state).
         """
-        # s = state
-        next_state = state.copy()
-        next_state = make_move(next_state, action)
-        return next_state
+        s = state
+        next_state = list(s)
+        next_state = make_move(self, next_state, action)
+        return tuple(next_state)
 
     def goal_test(self, state):
         """Return True if all boxes in warehouse are on a target.
         """
-        if (set(state.boxes).issubset(set(state.targets))):
+        if (set(state).issubset(set(self.problem.targets))):
             return True
         return False
 
@@ -244,17 +246,19 @@ class SokobanPuzzle(search.Problem):
         """
         Heuristic for goal state
         """
-        misplaced = [i for i, element in enumerate(n.state.boxes) if element not in n.state.targets] # Find indicies of misplaced boxes
+        state = list(n.state[0])
+        worker = list(n.state[1])
+        misplaced = [i for i, element in enumerate(state) if element not in self.problem.targets] # Find indicies of misplaced boxes
         if misplaced:
-            misplaced_weights = [(element, i) for i, element in enumerate(n.state.weights) if i in misplaced] # Get weights and indicies of misplaced boxes
-            heaviest_misplaced_box = n.state.boxes[(max(misplaced_weights, key = lambda t: t[0]))[1]] # Retrive coordinates of heaviest box
-            
-            # Find closest empty target to heaviest box
-            empty_targets = [(element, i) for i, element in enumerate(n.state.targets) if element not in n.state.boxes]# Find empty targets
-            distance_to = [ (abs(element[0][0]-heaviest_misplaced_box[0]) + abs(element[0][1]-heaviest_misplaced_box[1]), element[1]) for element, element in enumerate(empty_targets)]  # Get distance of targets.
-            closest_empty_target = n.state.targets[(min(distance_to, key = lambda t: t[0]))[1]] # Retrieve closest empty target
+            misplaced_weights = [(element, i) for i, element in enumerate(self.problem.weights) if i in misplaced] # Get weights and indicies of misplaced boxes
+            heaviest_misplaced_box = state[(max(misplaced_weights, key = lambda t: t[0]))[1]] # Retrive coordinates of heaviest box
 
-            worker_box = abs(n.state.worker[0]-heaviest_misplaced_box[0]) + abs(n.state.worker[1]-heaviest_misplaced_box[1]) # distance from worker to heaviest box (euclidean distance)
+            # Find closest empty target to heaviest box
+            empty_targets = [(element, i) for i, element in enumerate(self.problem.targets) if element not in state]# Find empty targets
+            distance_to = [ (abs(element[0][0]-heaviest_misplaced_box[0]) + abs(element[0][1]-heaviest_misplaced_box[1]), element[1]) for element, element in enumerate(empty_targets)]  # Get distance of targets.
+            closest_empty_target = self.problem.targets[(min(distance_to, key = lambda t: t[0]))[1]] # Retrieve closest empty target
+
+            worker_box = abs(worker[0]-heaviest_misplaced_box[0]) + abs(worker[1]-heaviest_misplaced_box[1]) # distance from worker to heaviest box (euclidean distance)
             box_target = abs(heaviest_misplaced_box[0]-closest_empty_target[0]) + abs(heaviest_misplaced_box[1]-closest_empty_target[1]) # distance from heaviest box to closest target (euclidean distance)
             return worker_box + box_target
         else:
@@ -262,13 +266,13 @@ class SokobanPuzzle(search.Problem):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def calculate_move(warehouse, move):
+def calculate_move(state, move):
     """
 
     Translates a given move ('Up', 'Down', 'Left', 'Right') into respective change in coordinates
 
     """
-
+    worker = state[1]
     coordinate_change = (0, 0)
     if move == 'Up':
         coordinate_change = (0, -1)
@@ -279,17 +283,17 @@ def calculate_move(warehouse, move):
     elif move == 'Right':
         coordinate_change = (1, 0)
     
-    explore_tile = (warehouse.worker[0] + coordinate_change[0],
-                    warehouse.worker[1] + coordinate_change[1])  # One tile ahead
+    explore_tile = (worker[0] + coordinate_change[0],
+                    worker[1] + coordinate_change[1])  # One tile ahead
     
     explore_more = (explore_tile[0] + coordinate_change[0],
-                        explore_tile[1] + coordinate_change[1]) # One tile further ahead
+                    explore_tile[1] + coordinate_change[1]) # One tile further ahead
     
     return explore_tile, explore_more
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def legal_check(warehouse, move):
+def legal_check(self, state, move):
     """
 
     Checks if given move is legal in given state
@@ -300,32 +304,31 @@ def legal_check(warehouse, move):
     # Cant push two boxes at same time
 
     """
-    explore_tile, explore_more = calculate_move(warehouse, move)
+    explore_tile, explore_more = calculate_move(state, move)
     
-    if binary_tuple_search(explore_tile, warehouse.walls) != -1:  # If wall
+    if binary_tuple_search(explore_tile, self.problem.walls) != -1:  # If wall
         return 'Impossible'
 
-    if binary_tuple_search(explore_tile, warehouse.boxes) != -1:  # If box
-        if binary_tuple_search(explore_more, warehouse.walls) != -1 or binary_tuple_search(explore_more, warehouse.boxes) != -1:  # If wall OR box
+    if binary_tuple_search(explore_tile, state[0]) != -1:  # If box
+        if binary_tuple_search(explore_more, self.problem.walls) != -1 or binary_tuple_search(explore_more, list(state[0])) != -1:  # If wall OR box
             return 'Impossible'
         return 'box'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def make_move(warehouse, move):
+def make_move(self, state, move):
     """
 
     Makes an already checked legal move in a given state
 
     """
-    explore_tile, explore_more = calculate_move(warehouse, move)
-
-    if legal_check(warehouse, move) == 'box':
+    explore_tile, explore_more = calculate_move(state, move)
+    if legal_check(self, state, move) == 'box':
     # Push box: Replace explore_tile with explore_more
-        warehouse.boxes[binary_tuple_search(explore_tile, warehouse.boxes)] = explore_more
-    warehouse.worker = explore_tile  # move player forward
-    return warehouse
+        state[0][binary_tuple_search(explore_tile, list(state[0]))] = explore_more ###CAUSING ERROR - NOT CORRECTLY ASSIGNING NEW BOX STATE AFTER PUSH###
+    state[1] = explore_tile  # move worker forward
+    return state
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -416,7 +419,7 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
 
     """
-    sp = SokobanPuzzle(wh)
+    sp = SokobanPuzzle(warehouse)
     # t0 = time.time()
     sol_ts = astar_graph_search(sp)  # graph search version
     # t1 = time.time()
