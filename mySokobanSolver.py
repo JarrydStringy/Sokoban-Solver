@@ -478,20 +478,3 @@ if __name__ == "__main__":
     # wh.load_warehouse("./warehouses/warehouse_8a.txt")
     # sequence = ['Right']
     # print(check_elem_action_seq(wh, sequence))  # Legal (Move to empty space)
-
-
-    boxes = [(3, 2), (2, 3), (5, 4)]
-    targets = [(2, 3), (11, 3), (4, 8), (7, 2)]
-    weights = [84, 99, 1]
-
-    misplaced = [i for i, element in enumerate(boxes) if element not in targets]
-    misplaced_weights = [(element, i) for i, element in enumerate(weights) if i in misplaced]
-    heaviest_misplaced_box = boxes[(max(misplaced_weights, key = lambda t: t[0]))[1]]
-
-    empty_targets = [(element, i) for i, element in enumerate(targets) if element not in boxes]# Find empty targets
-    # Subtract heaviest_misplaced_box from each empty target coordinates to get absolute difference/eucclidean distance between heaviest box and each emtpyt target.
-    distance_to = [ (abs(element[0][0]-heaviest_misplaced_box[0]) + abs(element[0][1]-heaviest_misplaced_box[1]), element[1]) for element, element in enumerate(empty_targets)]
-    # Find closest empty target by getting minimum int of above list.
-    closest_empty_target = targets[(min(distance_to, key = lambda t: t[0]))[1]]
-    print(closest_empty_target)
-    print("")
