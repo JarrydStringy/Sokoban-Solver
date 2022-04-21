@@ -203,13 +203,13 @@ class SokobanPuzzle(search.Problem):
 
         """
         L = []  # list of legal actions
-        if legal_check(state, ['Up']) != 'Impossible':
+        if legal_check(state, 'Up') != 'Impossible':
             L.append('Up')
-        elif legal_check(state, ['Down']) != 'Impossible':
+        if legal_check(state, 'Down') != 'Impossible':
             L.append('Down')
-        elif legal_check(state, ['Left']) != 'Impossible':
+        if legal_check(state, 'Left') != 'Impossible':
             L.append('Left')
-        elif legal_check(state, ['Right']) != 'Impossible':
+        if legal_check(state, 'Right') != 'Impossible':
             L.append('Right')
 
         return L
@@ -219,8 +219,9 @@ class SokobanPuzzle(search.Problem):
         action in the given state. The action must be one of
         self.actions(state).
         """
-        assert action in self.actions(state)  # defensive programming!
-        next_state = make_move(state, action)
+        # s = state
+        next_state = state.copy()
+        next_state = make_move(next_state, action)
         return next_state
 
     def goal_test(self, state):
@@ -264,7 +265,7 @@ class SokobanPuzzle(search.Problem):
 def calculate_move(warehouse, move):
     """
 
-    Translates a give move ('Up', 'Down', 'Left', 'Right') into respective change in coordinates
+    Translates a given move ('Up', 'Down', 'Left', 'Right') into respective change in coordinates
 
     """
 
@@ -416,10 +417,10 @@ def solve_weighted_sokoban(warehouse):
 
     """
     sp = SokobanPuzzle(wh)
-    t0 = time.time()
+    # t0 = time.time()
     sol_ts = astar_graph_search(sp)  # graph search version
-    t1 = time.time()
-    print("A* Solver took {:.6f} seconds".format(t1 - t0))
+    # t1 = time.time()
+    # print("A* Solver took {:.6f} seconds".format(t1 - t0))
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
