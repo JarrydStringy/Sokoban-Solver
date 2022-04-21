@@ -25,6 +25,7 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 
 """
 
+import time
 # You have to make sure that your code works with
 # the files provided (search.py and sokoban.py) as your code will be tested
 # with these files
@@ -35,6 +36,7 @@ from sqlalchemy import false, true
 
 import search
 import sokoban
+from search import astar_graph_search
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -218,7 +220,8 @@ class SokobanPuzzle(search.Problem):
         self.actions(state).
         """
         assert action in self.actions(state)  # defensive programming!
-        make_move(state, action)
+        next_state = make_move(state, action)
+        return next_state
 
     def goal_test(self, state):
         """Return True if all boxes in warehouse are on a target.
@@ -265,6 +268,7 @@ def calculate_move(warehouse, move):
 
     """
 
+    coordinate_change = (0, 0)
     if move == 'Up':
         coordinate_change = (0, -1)
     elif move == 'Down':
@@ -320,6 +324,7 @@ def make_move(warehouse, move):
     # Push box: Replace explore_tile with explore_more
         warehouse.boxes[binary_tuple_search(explore_tile, warehouse.boxes)] = explore_more
     warehouse.worker = explore_tile  # move player forward
+    return warehouse
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -379,7 +384,7 @@ def check_elem_action_seq(warehouse, action_seq):
         if legal_check(warehouse, move) == 'Impossible':
             return 'Impossible'
         else:
-            make_move(warehouse, move)
+            warehouse = make_move(warehouse, move)
     # Return string representing state of warehouse after applying sequence of actions
     return warehouse.__str__()
 
@@ -410,8 +415,11 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
 
     """
-
-    raise NotImplementedError()
+    sp = SokobanPuzzle(wh)
+    t0 = time.time()
+    sol_ts = astar_graph_search(sp)  # graph search version
+    t1 = time.time()
+    print("A* Solver took {:.6f} seconds".format(t1 - t0))
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -420,6 +428,9 @@ def solve_weighted_sokoban(warehouse):
 if __name__ == "__main__":
 
     wh = sokoban.Warehouse()
+    wh.load_warehouse("./warehouses/warehouse_8a.txt")
+    solve_weighted_sokoban(wh)
+    
 
     ##### check_elem_action_seq TEST #####
 
