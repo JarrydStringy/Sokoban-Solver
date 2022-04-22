@@ -237,11 +237,21 @@ class SokobanPuzzle(search.Problem):
         state2.  If the path does matter, it will consider c and maybe state1
         and action. The default method costs 1 for every step in the path."""
         # Cost should equal 1 + weight of box being moved if any
+
+        # return_val = c
+
+        # for a in action:
+        #     return_val += 1
+        #     if self.legal_check(self,a) == 'Impossible':
+        #         break   #Moves on to state 2
+        #     elif self.legal_check(self,a) == 'Box':
+        #         state1.boxes.
+        
         return c + 1
 
     def h(self, n):
         """
-        Heuristic for goal state
+        Heuristic for goal state; the estimated movement cost
         """
         misplaced = [i for i, element in enumerate(n.state.boxes) if element not in n.state.targets] # Find indicies of misplaced boxes
         if misplaced:
@@ -259,6 +269,8 @@ class SokobanPuzzle(search.Problem):
         else:
             return 0
 
+            
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def calculate_move(warehouse, move):
@@ -267,7 +279,7 @@ def calculate_move(warehouse, move):
     Translates a give move ('Up', 'Down', 'Left', 'Right') into respective change in coordinates
 
     """
-
+    
     coordinate_change = (0, 0)
     if move == 'Up':
         coordinate_change = (0, -1)
@@ -415,11 +427,12 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
 
     """
-    sp = SokobanPuzzle(wh)
+    sp = SokobanPuzzle(warehouse)
     t0 = time.time()
     sol_ts = astar_graph_search(sp)  # graph search version
     t1 = time.time()
     print("A* Solver took {:.6f} seconds".format(t1 - t0))
+    return sp.result, sp.path_cost
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
