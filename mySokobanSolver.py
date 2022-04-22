@@ -319,7 +319,6 @@ def legal_check(warehouse, state, move):
     if binary_tuple_search(explore_tile, list(boxes)) != -1:  # If box
         if binary_tuple_search(explore_more, warehouse.walls) != -1 or binary_tuple_search(explore_more, list(state[0])) != -1:  # If wall OR box
             return 'Impossible'
-        return 'box'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
