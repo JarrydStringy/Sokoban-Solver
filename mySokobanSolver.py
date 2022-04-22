@@ -32,6 +32,7 @@ import time
 from asyncore import read
 from math import floor
 
+from matplotlib.pyplot import box
 from sqlalchemy import false, true
 
 import search
@@ -239,38 +240,78 @@ class SokobanPuzzle(search.Problem):
         is such that the path doesn't matter, this function will only look at
         state2.  If the path does matter, it will consider c and maybe state1
         and action. The default method costs 1 for every step in the path."""
-        # Cost should equal 1 + weight of box being moved if any
-        return c + 1
+        if action:
+            c = c + 1
+        
+        boxes_old = state1[0]
+        boxes_new = state2[0]
+        assert len(boxes_old) == len(boxes_new)
+        counter = 0
+        while counter < len(boxes_old):
+            diff = dist_calc(boxes_old[counter], boxes_new[counter])
+            if diff > 0:
+                weight = self.problem.weights[counter]
+                box_push = diff * weight
+                c = c + box_push
+            counter = counter + 1
+        return c
 
     def h(self, n):
         """
         Heuristic for goal state
         """
-        state = list(n.state[0])
+        boxes = list(n.state[0])
         worker = list(n.state[1])
-        misplaced = [i for i, element in enumerate(state) if element not in self.problem.targets] # Find indicies of misplaced boxes
+        misplaced = [i for i, element in enumerate(boxes) if element not in self.problem.targets] # Find indicies of misplaced boxes
         if misplaced:
-            misplaced_weights = [(element, i) for i, element in enumerate(self.problem.weights) if i in misplaced] # Get weights and indicies of misplaced boxes
-            heaviest_misplaced_box = state[(max(misplaced_weights, key = lambda t: t[0]))[1]] # Retrive coordinates of heaviest box
+            misplaced_info = [(element, i) for i, element in enumerate(self.problem.weights) if i in misplaced] # Get weights and indicies of misplaced boxes
 
-            # Find closest empty target to heaviest box
-            empty_targets = [(element, i) for i, element in enumerate(self.problem.targets) if element not in state]# Find empty targets
-            distance_to = [ (abs(element[0][0]-heaviest_misplaced_box[0]) + abs(element[0][1]-heaviest_misplaced_box[1]), element[1]) for element, element in enumerate(empty_targets)]  # Get distance of targets.
-            closest_empty_target = self.problem.targets[(min(distance_to, key = lambda t: t[0]))[1]] # Retrieve closest empty target
-
-            worker_box = abs(worker[0]-heaviest_misplaced_box[0]) + abs(worker[1]-heaviest_misplaced_box[1]) # distance from worker to heaviest box (euclidean distance)
-            box_target = abs(heaviest_misplaced_box[0]-closest_empty_target[0]) + abs(heaviest_misplaced_box[1]-closest_empty_target[1]) # distance from heaviest box to closest target (euclidean distance)
-            return worker_box + box_target
+            worker_costs = 0
+            for box_info in misplaced_info:
+                b_c = boxes[box_info[1]] # Retrieve corresponding box coordinates
+                distance = dist_calc(tuple(worker), b_c) - 1 # Get distance between worker and box -> distance
+                worker_costs = worker_costs + distance
+            
+            push_costs = 0
+            empty_targets = [(element, i) for i, element in enumerate(self.problem.targets) if element not in boxes]# Gets coordinates and index of empty targets
+            while misplaced_info:
+                heaviest = (max(misplaced_info, key = lambda t: t[0]))
+                heaviest_index = heaviest[1]# Get index of heaviest box
+                heaviest_box = boxes[heaviest_index] # Retrive coordinates of heaviest box
+                distance_between = [ (dist_calc(tuple(element[0]), heaviest_box), element[1]) for element, element in enumerate(empty_targets)]  # Calculate distance heaviest box to each target.
+                cet_info = (min(distance_between, key = lambda t: t[0]))
+                cet_dist = cet_info[0] # Get distance to closest target
+                cet_index = cet_info[1] # Get index of closest target
+                cet = self.problem.targets[cet_index], cet_index # Retrieve coordiantes and idnex of closest target
+                empty_targets.remove(cet) # Remove cet from empty_targets
+                moving_cost = cet_dist * self.problem.weights[heaviest_index] # weight cost of moving box to target
+                total_cost = cet_dist + moving_cost # total cost to move box to target
+                push_costs = push_costs + total_cost
+                misplaced_info.remove(heaviest) # Remove current (heaviest) box from misplaced_info
+            
+            return worker_costs + push_costs
         else:
             return 0
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def dist_calc(co_1, co_2):
+        """
+        Calcualtes manhattan distance between two coordiante tuples
+
+        @param co_1: first coordinate tuple 
+
+        @param co_2: second coordinate tuple 
+        """
+        manhattan = (abs(co_1[0] - co_2[0]) +
+                     abs(co_1[1] - co_2[1]))
+        return manhattan
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 def calculate_move(state, move):
     """
-
     Translates a given move ('Up', 'Down', 'Left', 'Right') into respective change in coordinates
-
     """
     worker = state[1]
     coordinate_change = (0, 0)
@@ -295,7 +336,6 @@ def calculate_move(state, move):
 
 def legal_check(warehouse, state, move):
     """
-
     Checks if given move is legal in given state
 
     # LEGAL CONDITIONS:
@@ -308,7 +348,6 @@ def legal_check(warehouse, state, move):
     @param state: a state of the warehouse object
     
     @param move: a move to check
-
     """
     explore_tile, explore_more = calculate_move(state, move)
     boxes = state[0]
@@ -325,7 +364,6 @@ def legal_check(warehouse, state, move):
 
 def make_move(state, move):
     """
-
     Makes an already checked legal move in a given state
 
     @param state: a state of a problem
@@ -355,7 +393,6 @@ def binary_tuple_search(target, list):
 
     @return: index of target in list, -1 if not present
     """
-
     l = 0
     r = len(list) - 1
     while l <= r:
@@ -373,7 +410,6 @@ def binary_tuple_search(target, list):
 
 def check_elem_action_seq(warehouse, action_seq):
     """
-
     Determine if the sequence of actions listed in 'action_seq' is legal or not.
 
     Important notes:
@@ -430,7 +466,6 @@ def solve_weighted_sokoban(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
             C is the total cost of the action sequence C
-
     """
     sp = SokobanPuzzle(warehouse)
     # t0 = time.time()
