@@ -262,24 +262,25 @@ class SokobanPuzzle(search.Problem):
         """
         boxes = list(n.state[0])
         worker = list(n.state[1])
-        misplaced = [i for i, element in enumerate(boxes) if element not in self.problem.targets] # Find indicies of misplaced boxes
+        ### misplaced = [i for i, element in enumerate(boxes) if element not in self.problem.targets] # Find indicies of misplaced boxes
+        misplaced = [(element, i) for i, element in enumerate(boxes) if element not in self.problem.targets] # Get weights and indicies of misplaced boxes
         if misplaced:
-            misplaced_info = [(element, i) for i, element in enumerate(self.problem.weights) if i in misplaced] # Get weights and indicies of misplaced boxes
+            ### misplaced_info = [(element, i) for i, element in enumerate(self.problem.weights) if i in misplaced] # Get weights and indicies of misplaced boxes
 
             worker_costs = 0
-            for box_info in misplaced_info:
-                b_c = boxes[box_info[1]] # Retrieve corresponding box coordinates
+            for box in misplaced:
+                b_c = boxes[box[1]] # Retrieve corresponding box coordinates
                 distance = dist_calc(tuple(worker), b_c) - 1 # Get distance between worker and box -> distance
                 worker_costs = worker_costs + distance
             
             push_costs = 0
             empty_targets = [(element, i) for i, element in enumerate(self.problem.targets) if element not in boxes]# Gets coordinates and index of empty targets
-            while misplaced_info:
-                heaviest = (max(misplaced_info, key = lambda t: t[0]))
-                heaviest_index = heaviest[1]# Get index of heaviest box
+            while misplaced and empty_targets:
+                heaviest = (max(misplaced, key = lambda t: t[0]))
+                heaviest_index = heaviest[1] # Get index of heaviest box
                 heaviest_box = boxes[heaviest_index] # Retrive coordinates of heaviest box
                 distance_between = [ (dist_calc(tuple(element[0]), heaviest_box), element[1]) for element, element in enumerate(empty_targets)]  # Calculate distance heaviest box to each target.
-                cet_info = (min(distance_between, key = lambda t: t[0]))
+                cet_info = min(distance_between, key = lambda t: t[0])
                 cet_dist = cet_info[0] # Get distance to closest target
                 cet_index = cet_info[1] # Get index of closest target
                 cet = self.problem.targets[cet_index], cet_index # Retrieve coordiantes and idnex of closest target
@@ -287,7 +288,7 @@ class SokobanPuzzle(search.Problem):
                 moving_cost = cet_dist * self.problem.weights[heaviest_index] # weight cost of moving box to target
                 total_cost = cet_dist + moving_cost # total cost to move box to target
                 push_costs = push_costs + total_cost
-                misplaced_info.remove(heaviest) # Remove current (heaviest) box from misplaced_info
+                misplaced.remove(heaviest) # Remove current (heaviest) box from misplaced_info
             
             return worker_costs + push_costs
         else:
@@ -480,7 +481,12 @@ def solve_weighted_sokoban(warehouse):
 if __name__ == "__main__":
 
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_8a.txt")
+    # wh.load_warehouse("./warehouses/warehouse_01_a.txt")
+    wh.load_warehouse("./warehouses/warehouse_09.txt")
+    # wh.load_warehouse("./warehouses/warehouse_8a.txt")
+    # wh.load_warehouse("./warehouses/warehouse_57.txt")
+
+
     solve_weighted_sokoban(wh)
     
 
