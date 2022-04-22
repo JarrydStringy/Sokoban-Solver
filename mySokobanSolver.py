@@ -205,13 +205,13 @@ class SokobanPuzzle(search.Problem):
 
         """
         L = []  # list of legal actions
-        if legal_check(self, state, 'Up') != 'Impossible':
+        if legal_check(self.problem, state, 'Up') != 'Impossible':
             L.append('Up')
-        if legal_check(self, state, 'Down') != 'Impossible':
+        if legal_check(self.problem, state, 'Down') != 'Impossible':
             L.append('Down')
-        if legal_check(self, state, 'Left') != 'Impossible':
+        if legal_check(self.problem, state, 'Left') != 'Impossible':
             L.append('Left')
-        if legal_check(self, state, 'Right') != 'Impossible':
+        if legal_check(self.problem, state, 'Right') != 'Impossible':
             L.append('Right')
 
         return L
@@ -221,9 +221,9 @@ class SokobanPuzzle(search.Problem):
         action in the given state. The action must be one of
         self.actions(state).
         """
-        s = state
-        next_state = list(s)
-        next_state = make_move(self, next_state, action)
+
+        next_state = state
+        next_state = make_move(next_state, action)
         return tuple(next_state)
 
     def goal_test(self, state):
@@ -293,7 +293,7 @@ def calculate_move(state, move):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def legal_check(self, state, move):
+def legal_check(warehouse, state, move):
     """
 
     Checks if given move is legal in given state
@@ -303,32 +303,44 @@ def legal_check(self, state, move):
     # Cant push box through wall
     # Cant push two boxes at same time
 
+    @param warehouse: a valid Warehouse object
+
+    @param state: a state of the warehouse object
+    
+    @param move: a move to check
+
     """
     explore_tile, explore_more = calculate_move(state, move)
-    
-    if binary_tuple_search(explore_tile, self.problem.walls) != -1:  # If wall
+    boxes = state[0]
+
+    if binary_tuple_search(explore_tile, warehouse.walls) != -1:  # If wall
         return 'Impossible'
 
-    if binary_tuple_search(explore_tile, state[0]) != -1:  # If box
-        if binary_tuple_search(explore_more, self.problem.walls) != -1 or binary_tuple_search(explore_more, list(state[0])) != -1:  # If wall OR box
+    if binary_tuple_search(explore_tile, list(boxes)) != -1:  # If box
+        if binary_tuple_search(explore_more, warehouse.walls) != -1 or binary_tuple_search(explore_more, list(state[0])) != -1:  # If wall OR box
             return 'Impossible'
         return 'box'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def make_move(self, state, move):
+def make_move(state, move):
     """
 
     Makes an already checked legal move in a given state
 
+    @param state: a state of a problem
+
+    @param move: a valid move
     """
     explore_tile, explore_more = calculate_move(state, move)
-    if legal_check(self, state, move) == 'box':
-    # Push box: Replace explore_tile with explore_more
-        state[0][binary_tuple_search(explore_tile, list(state[0]))] = explore_more ###CAUSING ERROR - NOT CORRECTLY ASSIGNING NEW BOX STATE AFTER PUSH###
-    state[1] = explore_tile  # move worker forward
-    return state
+    worker = list(state[1])
+    boxes = list(state[0])
+    push = binary_tuple_search(explore_tile, list(state[0])) # Check if tile in front of worker has box on it
+    if push != -1: # If tile in front of worker has box
+        boxes[push] = explore_more ###CAUSING ERROR - NOT CORRECTLY ASSIGNING NEW BOX STATE AFTER PUSH### # Push box: Replace explore_tile with explore_more
+    worker = explore_tile  # move worker forward
+    return tuple(boxes), tuple(worker)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -383,12 +395,14 @@ def check_elem_action_seq(warehouse, action_seq):
                the sequence of actions.  This must be the same string as the
                string returned by the method  Warehouse.__str__()
     """
-
+    state = tuple(warehouse.boxes), tuple(warehouse.worker)
     for move in action_seq:
-        if legal_check(warehouse, move) == 'Impossible':
+        if legal_check(warehouse, state, move) == 'Impossible':
             return 'Impossible'
         else:
-            warehouse = make_move(warehouse, move)
+            new_state = make_move(state, move)
+            warehouse.boxes = new_state[0]
+            warehouse.worker = new_state[1]
     # Return string representing state of warehouse after applying sequence of actions
     return warehouse.__str__()
 
