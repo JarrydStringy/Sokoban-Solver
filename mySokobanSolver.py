@@ -256,9 +256,10 @@ class SokobanPuzzle(search.Problem):
             counter = counter + 1
         return c
 
+
     def h(self, n):
         """
-        Heuristic for goal state
+        Heuristic for goal state; the estimated movement cost
         """
         boxes = list(n.state[0])
         worker = list(n.state[1])
@@ -293,6 +294,8 @@ class SokobanPuzzle(search.Problem):
             return worker_costs + push_costs
         else:
             return 0
+
+            
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
