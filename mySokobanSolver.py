@@ -321,7 +321,7 @@ def dist_calc(co_1, co_2):
 
 def calculate_move(state, move):
     """
-    Translates a given move ('Up', 'Down', 'Left', 'Right') into respective change in coordinates
+    Calculates the two tiles in the direction of a given move ('Up', 'Down', 'Left', 'Right')
     """
     worker = state[1]
     coordinate_change = (0, 0)
@@ -459,6 +459,14 @@ def check_elem_action_seq(warehouse, action_seq):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def trace_path(node):
+    path = []
+    while node.parent:
+        path.insert(0, node.action) # insert at index 0 (start)
+        node = node.parent
+    return path # ['Left', 'Down', Down','Right', 'Up', 'Down']
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def solve_weighted_sokoban(warehouse):
     """
@@ -483,12 +491,13 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
     """
     sp = SokobanPuzzle(warehouse)
-    # t0 = time.time()
     sol_ts = astar_graph_search(sp)  # graph search version
-    # t1 = time.time()
-    # Trace back node parents to get action sequence -> action_seq
-    # check_elem_action_seq(sp.problem, action_seq)
-    # print("A* Solver took {:.6f} seconds".format(t1 - t0))
+    if sol_ts:
+        S = trace_path(sol_ts) # trace path to solution node
+        C = sol_ts.path_cost
+        # check_elem_action_seq(sp.problem, action_seq)
+        return S, C
+    return "Impossible"
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
