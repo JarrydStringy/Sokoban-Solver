@@ -198,6 +198,7 @@ class SokobanPuzzle(search.Problem):
         assert len(warehouse.targets) >= len(warehouse.boxes) # Check there are enough targets for all boxes
         self.initial = tuple(warehouse.boxes), tuple(warehouse.worker)
         self.problem = warehouse
+        self.taboo = taboo_calc(warehouse)
         
 
     def actions(self, state):
@@ -205,14 +206,22 @@ class SokobanPuzzle(search.Problem):
         Return the list of actions that can be executed in the given state.
 
         """
-        L = []  # list of legal actions
+        L = []  # list of actions that can be taken
         if legal_check(self.problem, state, 'Up') != 'Impossible':
+            # if taboo_check(self.taboo, state, 'Up') != 'tabboo': 
+                # L.append('Up')
             L.append('Up')
         if legal_check(self.problem, state, 'Down') != 'Impossible':
+            # if taboo_check(self.taboo, state, 'Down') != 'tabboo': 
+                # L.append('Down')
             L.append('Down')
         if legal_check(self.problem, state, 'Left') != 'Impossible':
+            # if taboo_check(self.taboo, state, 'Left') != 'tabboo': 
+                # L.append('Left')
             L.append('Left')
         if legal_check(self.problem, state, 'Right') != 'Impossible':
+            # if taboo_check(self.taboo, state, 'Right') != 'tabboo': 
+                # L.append('Right')
             L.append('Right')
 
         return L
@@ -264,11 +273,11 @@ class SokobanPuzzle(search.Problem):
         """
         boxes = list(n.state[0])
         worker = list(n.state[1])
+
         ### misplaced = [i for i, element in enumerate(boxes) if element not in self.problem.targets] # Find indicies of misplaced boxes
+
         misplaced = [(element, i) for i, element in enumerate(boxes) if element not in self.problem.targets] # Get weights and indicies of misplaced boxes
         if misplaced:
-            ### misplaced_info = [(element, i) for i, element in enumerate(self.problem.weights) if i in misplaced] # Get weights and indicies of misplaced boxes
-
             worker_costs = 0
             for box in misplaced:
                 b_c = boxes[box[1]] # Retrieve corresponding box coordinates
@@ -291,7 +300,6 @@ class SokobanPuzzle(search.Problem):
                 total_cost = cet_dist + moving_cost # total cost to move box to target
                 push_costs = push_costs + total_cost
                 misplaced.remove(heaviest) # Remove current (heaviest) box from misplaced_info
-            
             return worker_costs + push_costs
         else:
             return 0
@@ -344,6 +352,34 @@ def calculate_move(state, move):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def taboo_calc(warehouse):
+    """
+    finds coordinates of taboo cells in warehouse
+    
+    @param return: returns list of tuple coordinates of taboo cell locaitons in warehouse e.g. [(3,5), (7,2), (8,4)]
+    """
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def taboo_check(taboo_locations, state, move):
+    """
+    checks if pushing box into taboo cell
+    
+    @param tabboo_locations: coordiantes of taboo cells e.g. [(3,5), (7,2), (8,4)]
+
+    @param return: 'tabboo' if moving box into tabboo cell
+    """
+    explore_tile, explore_more = calculate_move(state, move)
+    boxes = state[0]
+    t_l = taboo_locations
+    obstruction_close = [element for element, element in enumerate(boxes) if element == explore_tile] # For all boxes in current state, if any (boxes) are on the first tile infront of the worker, add to list of obstrucitons
+    if len(obstruction_close) != 0:  # If box where worker wants to go
+        if binary_tuple_search(explore_more, t_l) != -1: # if pushing box into taboo cell
+            return 'tabboo'
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 def legal_check(warehouse, state, move):
     """
     Checks if given move is legal in given state
@@ -362,11 +398,14 @@ def legal_check(warehouse, state, move):
     explore_tile, explore_more = calculate_move(state, move)
     boxes = state[0]
 
+    obstruction_close = [element for element, element in enumerate(boxes) if element == explore_tile] # For all boxes in current state, if any (boxes) are on the first tile infront of the worker, add to list of obstrucitons
+    obstruction_further = [element for element, element in enumerate(boxes) if element == explore_more] # 2 tiles in front
+    
     if binary_tuple_search(explore_tile, warehouse.walls) != -1:  # If wall
         return 'Impossible'
 
-    if binary_tuple_search(explore_tile, list(boxes)) != -1:  # If box
-        if binary_tuple_search(explore_more, warehouse.walls) != -1 or binary_tuple_search(explore_more, list(state[0])) != -1:  # If wall OR box
+    if len(obstruction_close) != 0:  # If box
+        if binary_tuple_search(explore_more, warehouse.walls) != -1 or len(obstruction_further) != 0:  # If wall OR box
             return 'Impossible'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -385,7 +424,7 @@ def make_move(state, move):
     boxes = list(state[0])
     push = binary_tuple_search(explore_tile, list(state[0])) # Check if tile in front of worker has box on it
     if push != -1: # If tile in front of worker has box
-        boxes[push] = explore_more ###CAUSING ERROR - NOT CORRECTLY ASSIGNING NEW BOX STATE AFTER PUSH### # Push box: Replace explore_tile with explore_more
+        boxes[push] = explore_more # Push box: Replace explore_tile with explore_more
     worker = explore_tile  # move worker forward
     return tuple(boxes), tuple(worker)
 
@@ -395,7 +434,9 @@ def make_move(state, move):
 
 def binary_tuple_search(target, list):
     """
-    Binary Tuple Search (More efficiently searches for a given tuple in a sorted list of tuples)
+    WARNING: ONLY USE FOR STATIC SORTED LISTS (E.G. WALLS, TARGETS)
+
+    Binary Tuple Search (More efficiently searches for a given tuple in a LARGE, STATIC, ALWAYS SORTED list of tuples such as walls)
 
     @param target: a coordinate tuple E.g. (4,0)
 
@@ -414,11 +455,6 @@ def binary_tuple_search(target, list):
         else:
             r = m - 1
     return -1
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-def tabboo_check(warehouseString):
-    return [(3, 4), (2, 8)]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -480,7 +516,7 @@ def solve_weighted_sokoban(warehouse):
     @return
 
         If puzzle cannot be solved
-            return 'Impossible', None
+            return 'Impossible', None       SHOULD BE 'impossible' as its whats defined in the gui_sokoban comparison
 
         If a solution was found,
             return S, C
@@ -497,7 +533,7 @@ def solve_weighted_sokoban(warehouse):
         C = sol_ts.path_cost
         # check_elem_action_seq(sp.problem, action_seq)
         return S, C
-    return "Impossible"
+    return "impossible", None
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -507,8 +543,9 @@ if __name__ == "__main__":
 
     wh = sokoban.Warehouse()
     # wh.load_warehouse("./warehouses/warehouse_01_a.txt")
-    wh.load_warehouse("./warehouses/warehouse_09.txt")
+    # wh.load_warehouse("./warehouses/warehouse_09.txt")
     # wh.load_warehouse("./warehouses/warehouse_8a.txt")
+    wh.load_warehouse("./warehouses/warehouse_47.txt")
     # wh.load_warehouse("./warehouses/warehouse_57.txt")
 
 
