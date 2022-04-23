@@ -230,7 +230,8 @@ class SokobanPuzzle(search.Problem):
     def goal_test(self, state):
         """Return True if all boxes in warehouse are on a target.
         """
-        if (set(state).issubset(set(self.problem.targets))):
+        boxes = state[0]
+        if (set(boxes).issubset(set(self.problem.targets))):
             return True
         return False
 
