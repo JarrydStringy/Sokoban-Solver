@@ -486,7 +486,8 @@ def solve_weighted_sokoban(warehouse):
     # t0 = time.time()
     sol_ts = astar_graph_search(sp)  # graph search version
     # t1 = time.time()
-    # check_elem_action_seq(sol_ts)
+    # Trace back node parents to get action sequence -> action_seq
+    # check_elem_action_seq(sp.problem, action_seq)
     # print("A* Solver took {:.6f} seconds".format(t1 - t0))
 
 
