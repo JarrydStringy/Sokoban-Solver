@@ -299,6 +299,11 @@ class SokobanPuzzle(search.Problem):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def direction_push(something):
+    return -1
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 def dist_calc(co_1, co_2):
         """
         Calcualtes manhattan distance between two coordiante tuples
@@ -411,6 +416,11 @@ def binary_tuple_search(target, list):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def tabboo_check(warehouseString):
+    return [(3, 4), (2, 8)]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 
 def check_elem_action_seq(warehouse, action_seq):
     """
@@ -475,6 +485,7 @@ def solve_weighted_sokoban(warehouse):
     # t0 = time.time()
     sol_ts = astar_graph_search(sp)  # graph search version
     # t1 = time.time()
+    # check_elem_action_seq(sol_ts)
     # print("A* Solver took {:.6f} seconds".format(t1 - t0))
 
 
