@@ -199,6 +199,7 @@ class SokobanPuzzle(search.Problem):
 
         """
         L = []  # list of actions that can be taken
+
         if legal_check(self.problem, state, 'Up') != 'Impossible':
             if taboo_check(self.taboo, state, 'Up') != 'tabboo': 
                 L.append('Up')
@@ -346,25 +347,25 @@ def taboo_calc(warehouse):
     
     @param return: returns list of tuple coordinates of taboo cell locaitons in warehouse e.g. [(3,5), (7,2), (8,4)]
     """
-    wh = str(warehouse)
+    wh = taboo_cells(warehouse)
     lines = wh.split(sep="\n")
     
-    first_row_brick, first_column_brick = None, None
-    for row, line in enumerate(lines):
-        brick_column = line.find("X")
-        if brick_column >= 0:
-            if first_row_brick is None:
-                first_row_brick = row  # found first row with a taboo cell
-            if first_column_brick is None:
-                first_column_brick = brick_column
-            else:
-                first_column_brick = min(first_column_brick, brick_column)
+    # first_row_brick, first_column_brick = None, None
+    # for row, line in enumerate(lines):
+    #     brick_column = line.find("X")
+    #     if brick_column >= 0:
+    #         if first_row_brick is None:
+    #             first_row_brick = row  # found first row with a taboo cell
+    #         if first_column_brick is None:
+    #             first_column_brick = brick_column
+    #         else:
+    #             first_column_brick = min(first_column_brick, brick_column)
                 
-    lines = [
-        line[first_column_brick:]
-        for line in lines[first_row_brick:]
-        if line.find("X") >= 0
-    ]
+    # lines = [
+    #     line[first_column_brick:]
+    #     for line in lines[first_row_brick:]
+    #     if line.find("X") >= 0
+    # ]
     
     return list(find_2D_iterator(lines, "X"))
 
