@@ -33,12 +33,14 @@ from asyncore import read
 from math import floor
 
 from matplotlib.pyplot import box
-#from sqlalchemy import false, true
 
 import search
 import sokoban
 from search import astar_graph_search
 from sokoban import find_2D_iterator
+
+#from sqlalchemy import false, true
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -200,19 +202,15 @@ class SokobanPuzzle(search.Problem):
         if legal_check(self.problem, state, 'Up') != 'Impossible':
             if taboo_check(self.taboo, state, 'Up') != 'tabboo': 
                 L.append('Up')
-            L.append('Up')
         if legal_check(self.problem, state, 'Down') != 'Impossible':
             if taboo_check(self.taboo, state, 'Down') != 'tabboo': 
                 L.append('Down')
-            L.append('Down')
         if legal_check(self.problem, state, 'Left') != 'Impossible':
             if taboo_check(self.taboo, state, 'Left') != 'tabboo': 
                 L.append('Left')
-            L.append('Left')
         if legal_check(self.problem, state, 'Right') != 'Impossible':
             if taboo_check(self.taboo, state, 'Right') != 'tabboo': 
                 L.append('Right')
-            L.append('Right')
 
         return L
 
