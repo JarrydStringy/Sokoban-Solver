@@ -14,9 +14,7 @@ marking your code, make sure that your code runs without errors with this script
 
 '''
 
-
 from sokoban import Warehouse
-
 
 try:
     from fredSokobanSolver import taboo_cells, solve_weighted_sokoban, check_elem_action_seq
@@ -25,7 +23,6 @@ except ModuleNotFoundError:
     from mySokobanSolver import taboo_cells, solve_weighted_sokoban, check_elem_action_seq, taboo_calc
     print("Using submitted solver")
 
-    
 def test_taboo_cells():
     wh = Warehouse()
     wh.load_warehouse("./warehouses/warehouse_01.txt")
@@ -63,8 +60,6 @@ def test_check_elem_action_seq():
         print('Test 2 failed!  :-(\n')
         print('Expected ');print(expected_answer)
         print('But, received ');print(answer)
-
-
 
 def test_solve_weighted_sokoban():
     wh = Warehouse()    
