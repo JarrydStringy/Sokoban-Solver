@@ -33,11 +33,12 @@ from asyncore import read
 from math import floor
 
 from matplotlib.pyplot import box
-from sqlalchemy import false, true
+#from sqlalchemy import false, true
 
 import search
 import sokoban
 from search import astar_graph_search
+from sokoban import find_2D_iterator
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -59,46 +60,28 @@ def my_team():
 def taboo_cells(warehouse):
     """
     Identify the taboo cells of a warehouse. A "taboo cell" is by definition
-    a cell inside a warehouse such that whenever a box get pushed on such
-    a cell then the puzzle becomes unsolvable.
-
-    Cells outside the warehouse are not taboo. It is a fail to tag an
-    outside cell as taboo.
-
-    When determining the taboo cells, you must ignore all the existing boxes,
-    only consider the walls and the target  cells.
-    Use only the following rules to determine the taboo cells;
-     Rule 1: if a cell is a corner and not a target, then it is a taboo cell.
-     Rule 2: all the cells between two corners along a wall are taboo if none of
-             these cells is a target.
-
-    @param warehouse:
-        a Warehouse object with the worker inside the warehouse
-
-    @return
-       A string representing the warehouse with only the wall cells marked with
-       a '#' and the taboo cells marked with a 'X'.
+	@@ -77,14 +75,93 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     """
 
-    # Cells in the grid
+    #Cells in the grid
     taboo = 'X'
     wall = '#'
-    targets = ['.', '!', '*']
+    targets = ['.', '!', '*']    
     unwanted = ['$', '@']
 
-    # Can use itertools.combination for finding the corners
-    # Checks if next to a wall on left/right and up/down
+    #Can use itertools.combination for finding the corners
+    #Checks if next to a wall on left/right and up/down
     def Corner(warehouse, x, y, wall=False):
         vertWalls = 0
         horizWalls = 0
         wall
-        # Check for walls above and below
+        #Check for walls above and below
         for (dx, dy) in [(0, 1), (0, -1)]:
             if warehouse[y + dy][x + dx] == wall:
                 vertWalls += 1
-        # Check for walls left and right
+        #Check for walls left and right
         for (dx, dy) in [(1, 0), (-1, 0)]:
             if warehouse[y + dy][x + dx] == wall:
                 horizWalls += 1
@@ -107,66 +90,66 @@ def taboo_cells(warehouse):
         else:
             return (vertWalls >= 1) and (horizWalls >= 1)
 
-    # RULE 1: Check if a cell is a corner and not a target
+    #RULE 1: Check if a cell is a corner and not a target
     def Rule1(warehouse):
-        inside = False  # Bool to check if inside or out
-        for y in range(len(warehouse) - 1):  # Columns
-            for x in range(len(warehouse) - 1):  # Rows
+        inside = False                                  #Bool to check if inside or out
+        for y in range(len(warehouse) - 1):             #Columns
+            for x in range(len(warehouse) - 1):         #Rows
                 if not inside:
-                    if warehouse[y][x] == wall:  # If we have reached the wall
-                        inside = True  # We are inside
+                    if warehouse[y][x] == wall:         #If we have reached the wall
+                        inside = True                   #We are inside
                 else:
                     if all([cell == ' ' for cell in warehouse[y][x:]]):
-                        break  # We are back ouside
+                        break                           #We are back ouside
 
-                    if warehouse[y][x] not in targets:  # Can't be taboo if it is a target
-                        if warehouse[y][x] != wall:  # Or a wall
+                    if warehouse[y][x] not in targets:  #Can't be taboo if it is a target
+                        if warehouse[y][x] != wall:     #Or a wall
                             if Corner(warehouse, x, y):
                                 warehouse[y][x] = taboo
         return warehouse
 
-    # RULE 2: Check if there are any target cells between two corners
+    #RULE 2: Check if there are any target cells between two corners
     def Rule2(warehouse):
-        for y in range(1, len(warehouse) - 1):  # Col
-            for x in range(1, len(warehouse[0]) - 1):  # Row
-                # Needs to be inline with a corner
-                if warehouse[y][x] == taboo and Corner(warehouse, x, y):
+        for y in range(1, len(warehouse) - 1):                              #Col
+            for x in range(1, len(warehouse[0]) - 1):                       #Row
+                if warehouse[y][x] == taboo and Corner(warehouse, x, y):    #Needs to be inline with a corner
                     row = warehouse[y][x + 1:]
                     col = [row[x] for row in warehouse[y + 1:][:]]
-                    for x2 in range(len(row)):  # Inner row
+                    for x2 in range(len(row)):                              #Inner row
                         if row[x2] in targets or row[x2] == wall:
-                            break  # Can't be a target or be a wall
+                            break                                           #Can't be a target or be a wall
                         if row[x2] == taboo and Corner(warehouse, x2 + x + 1, y):
                             if all([Corner(warehouse, x3, y, True) for x3 in range(x + 1, x2 + x + 1)]):
                                 for x4 in range(x + 1, x2 + x + 1):
                                     warehouse[y][x4] = taboo
-                    for y2 in range(len(col)):  # Inner col
+                    for y2 in range(len(col)):                              #Inner col
                         if col[y2] in targets or col[y2] == wall:
-                            break  # Can't be a target or be a wall
+                            break                                           #Can't be a target or be a wall
                         if col[y2] == taboo and Corner(warehouse, x, y2 + y + 1):
                             if all([Corner(warehouse, x, y3, True) for y3 in range(y + 1, y2 + y + 1)]):
                                 for y4 in range(y + 1, y2 + y + 1):
                                     warehouse[y4][x] = taboo
         return warehouse
 
-    # convert warehouse to a string
+    #convert warehouse to a string
     wh_str = str(warehouse)
 
-    # Clean the string by removing the boxes and players
-    for cell in unwanted:  # If it is in list
-        wh_clean = wh_str.replace(cell, ' ')  # replace with a blank
+    #Clean the string by removing the boxes and players
+    for cell in unwanted:   #If it is in list
+        wh_clean = wh_str.replace(cell, ' ')    #replace with a blank
 
-    # Rearange string to array to show full wh in 2D array
+    #Rearange string to array to show full wh in 2D array
     wh_array = [list(line) for line in wh_clean.split('\n')]
+    print(wh_array)    
 
-    # Apply the 2 rules
+    #Apply the 2 rules
     wh_array = Rule1(wh_array)
     wh_array = Rule2(wh_array)
 
-    # Convert back into a 1D string
+    #Convert back into a 1D string
     wh_str = '\n'.join([''.join(line) for line in wh_array])
 
-    # Result
+    #Result
     return wh_str
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -208,20 +191,20 @@ class SokobanPuzzle(search.Problem):
         """
         L = []  # list of actions that can be taken
         if legal_check(self.problem, state, 'Up') != 'Impossible':
-            # if taboo_check(self.taboo, state, 'Up') != 'tabboo': 
-                # L.append('Up')
+            if taboo_check(self.taboo, state, 'Up') != 'tabboo': 
+                L.append('Up')
             L.append('Up')
         if legal_check(self.problem, state, 'Down') != 'Impossible':
-            # if taboo_check(self.taboo, state, 'Down') != 'tabboo': 
-                # L.append('Down')
+            if taboo_check(self.taboo, state, 'Down') != 'tabboo': 
+                L.append('Down')
             L.append('Down')
         if legal_check(self.problem, state, 'Left') != 'Impossible':
-            # if taboo_check(self.taboo, state, 'Left') != 'tabboo': 
-                # L.append('Left')
+            if taboo_check(self.taboo, state, 'Left') != 'tabboo': 
+                L.append('Left')
             L.append('Left')
         if legal_check(self.problem, state, 'Right') != 'Impossible':
-            # if taboo_check(self.taboo, state, 'Right') != 'tabboo': 
-                # L.append('Right')
+            if taboo_check(self.taboo, state, 'Right') != 'tabboo': 
+                L.append('Right')
             L.append('Right')
 
         return L
@@ -358,6 +341,27 @@ def taboo_calc(warehouse):
     
     @param return: returns list of tuple coordinates of taboo cell locaitons in warehouse e.g. [(3,5), (7,2), (8,4)]
     """
+    wh = str(warehouse)
+    lines = wh.split(sep="\n")
+    
+    first_row_brick, first_column_brick = None, None
+    for row, line in enumerate(lines):
+        brick_column = line.find("X")
+        if brick_column >= 0:
+            if first_row_brick is None:
+                first_row_brick = row  # found first row with a taboo cell
+            if first_column_brick is None:
+                first_column_brick = brick_column
+            else:
+                first_column_brick = min(first_column_brick, brick_column)
+                
+    lines = [
+        line[first_column_brick:]
+        for line in lines[first_row_brick:]
+        if line.find("X") >= 0
+    ]
+    
+    return list(find_2D_iterator(lines, "X"))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

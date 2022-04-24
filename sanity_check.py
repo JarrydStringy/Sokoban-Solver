@@ -17,13 +17,12 @@ marking your code, make sure that your code runs without errors with this script
 
 from sokoban import Warehouse
 
+
 try:
-    from fredSokobanSolver import (check_elem_action_seq,
-                                   solve_weighted_sokoban, taboo_cells)
+    from fredSokobanSolver import taboo_cells, solve_weighted_sokoban, check_elem_action_seq
     print("Using Fred's solver")
 except ModuleNotFoundError:
-    from mySokobanSolver import (check_elem_action_seq, solve_weighted_sokoban,
-                                 taboo_cells)
+    from mySokobanSolver import taboo_cells, solve_weighted_sokoban, check_elem_action_seq, taboo_calc
     print("Using submitted solver")
 
     
@@ -88,13 +87,23 @@ def test_solve_weighted_sokoban():
         print('Your answer is different but it might still be correct')
         print('Check that you pushed the right box onto the left target!')
     print(f'Your cost = {cost}, expected cost = {expected_cost}')
-        
+
+def test_taboo_calc():
+    wh = Warehouse()
+    wh.load_warehouse("./warehouses/warehouse_8a.txt")
+    wh_taboo = taboo_cells(wh)
+    print(wh_taboo)
+    answer = taboo_calc(wh_taboo)
+  
+    print('<<  Testing {} >>')
+    print(answer)
     
 
 if __name__ == "__main__":
     pass    
 #    print(my_team())  # should print your team
 
-    #test_taboo_cells() 
-    test_check_elem_action_seq()
+    test_taboo_cells() 
+    #test_check_elem_action_seq()
     #test_solve_weighted_sokoban()
+    test_taboo_calc()
