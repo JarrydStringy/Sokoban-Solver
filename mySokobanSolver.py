@@ -200,6 +200,9 @@ class SokobanPuzzle(search.Problem):
         """
         L = []  # list of actions that can be taken
 
+        if state == (((3, 3), (4, 2), (4, 3)),  (3,2)):  ### DELETE BEFORE SUBMISSION ###
+            print("pause")
+
         if legal_check(self.problem, state, 'Up') != 'Impossible':
             if taboo_check(self.taboo, state, 'Up') != 'tabboo': 
                 L.append('Up')
@@ -262,8 +265,6 @@ class SokobanPuzzle(search.Problem):
         """
         boxes = list(n.state[0])
         worker = list(n.state[1])
-
-        ### misplaced = [i for i, element in enumerate(boxes) if element not in self.problem.targets] # Find indicies of misplaced boxes
 
         misplaced = [(element, i) for i, element in enumerate(boxes) if element not in self.problem.targets] # Get weights and indicies of misplaced boxes
         if misplaced:
@@ -408,14 +409,14 @@ def legal_check(warehouse, state, move):
     explore_tile, explore_more = calculate_move(state, move)
     boxes = state[0]
 
-    obstruction_close = [element for element, element in enumerate(boxes) if element == explore_tile] # For all boxes in current state, if any (boxes) are on the first tile infront of the worker, add to list of obstrucitons
-    obstruction_further = [element for element, element in enumerate(boxes) if element == explore_more] # 2 tiles in front
+    push = [element for element, element in enumerate(boxes) if element == explore_tile] # For all boxes in current state, if any (boxes) are on the first tile infront of the worker, add to list of obstrucitons
+    push_into = [element for element, element in enumerate(boxes) if element == explore_more] # 2 tiles in front
     
     if binary_tuple_search(explore_tile, warehouse.walls) != -1:  # If wall
         return 'Impossible'
 
-    if len(obstruction_close) != 0:  # If box
-        if binary_tuple_search(explore_more, warehouse.walls) != -1 or len(obstruction_further) != 0:  # If wall OR box
+    if len(push) != 0:  # If box
+        if binary_tuple_search(explore_more, warehouse.walls) != -1 or len(push_into) != 0:  # If wall OR box
             return 'Impossible'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -432,9 +433,9 @@ def make_move(state, move):
     explore_tile, explore_more = calculate_move(state, move)
     worker = list(state[1])
     boxes = list(state[0])
-    push = binary_tuple_search(explore_tile, list(state[0])) # Check if tile in front of worker has box on it
-    if push != -1: # If tile in front of worker has box
-        boxes[push] = explore_more # Push box: Replace explore_tile with explore_more
+    push = [(element, i) for i, element in enumerate(boxes) if element == explore_tile] # For all boxes in current state, if any (boxes) are on the first tile infront of the worker, add to list of obstrucitons # Check if tile in front of worker has box on it
+    if len(push) != 0: # If tile in front of worker has box
+        boxes[push[0][1]] = explore_more # Push box: Replace explore_tile with explore_more
     worker = explore_tile  # move worker forward
     return tuple(boxes), tuple(worker)
 
