@@ -290,7 +290,7 @@ class SokobanPuzzle(search.Problem):
                 total_cost = cet_dist + moving_cost # total cost to move box to target
                 push_costs = push_costs + total_cost
                 misplaced.remove(heaviest) # Remove current (heaviest) box from misplaced_info
-            return worker_costs + (push_costs // 2)
+            return (worker_costs + push_costs) // 2
         else:
             return 0
 
