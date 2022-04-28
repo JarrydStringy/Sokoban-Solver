@@ -295,38 +295,24 @@ class SokobanPuzzle(search.Problem):
     #     else:
     #         return 0
 
+    def manhat(a, b):
+        return sum(abs(val1 - val2) for val1, val2 in zip(a,b))
+
     
     def h(self, n):
         """
         Heuristic for goal state; the estimated movement cost
         """
 
-
-
-
         boxes = list(n.state[0])
         worker = list(n.state[1])
-        weights = self.problem.weights
-        targets = self.problem.targets
+
+        box_weight = zip(n.state[0].weights)
+
+        return_val = sum(min(manhat(B, G)*W))
 
 
-        misplaced = zip(boxes, weights) # Get position and weights of boxes not on targets
-        w_b = sum(manhattan(worker,box) for box, weight in misplaced)
-        print(w_b)
-        b_t = sum(manhattan(box,target) for box, weight in misplaced for target in targets)
-        print(b_t)
-        
-        print(min([(manhattan(B,T)) for B in misplaced for T in targets]))
-
-        
-        b_t = sum(min([(manhattan(B[0],T)) for B in misplaced for T in targets])) # Need to add distance from box to target
-        print(b_t)
-
-
-
-
-        # cost b_g + cost w_b
-    #     return 0
+        return 0
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
