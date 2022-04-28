@@ -259,51 +259,78 @@ class SokobanPuzzle(search.Problem):
         return c
 
 
+    # def h(self, n):
+    #     """
+    #     Heuristic for goal state; the estimated movement cost
+    #     """
+    #     boxes = list(n.state[0])
+    #     worker = list(n.state[1])
+
+    #     misplaced = [(element, i) for i, element in enumerate(boxes) if element not in self.problem.targets] # Get weights and indicies of misplaced boxes
+    #     if misplaced:
+    #         worker_costs = 0
+    #         for box in misplaced:
+    #             b_c = boxes[box[1]] # Retrieve corresponding box coordinates
+    #             distance = manhattan(tuple(worker), b_c) - 1 # Get distance between worker and box -> distance
+    #             worker_costs = worker_costs + distance
+            
+    #         push_costs = 0
+    #         empty_targets = [(element, i) for i, element in enumerate(self.problem.targets) if element not in boxes]# Gets coordinates and index of empty targets
+    #         while misplaced and empty_targets:
+    #             heaviest = (max(misplaced, key = lambda t: t[0]))
+    #             heaviest_index = heaviest[1] # Get index of heaviest box
+    #             heaviest_box = boxes[heaviest_index] # Retrive coordinates of heaviest box
+    #             distance_between = [ (manhattan(tuple(element[0]), heaviest_box), element[1]) for element, element in enumerate(empty_targets)]  # Calculate distance heaviest box to each target.
+    #             cet_info = min(distance_between, key = lambda t: t[0])
+    #             cet_dist = cet_info[0] # Get distance to closest target
+    #             cet_index = cet_info[1] # Get index of closest target
+    #             cet = self.problem.targets[cet_index], cet_index # Retrieve coordiantes and idnex of closest target
+    #             empty_targets.remove(cet) # Remove cet from empty_targets # Retain avaliablity for other boxes
+    #             moving_cost = cet_dist * self.problem.weights[heaviest_index] # weight cost of moving box to target
+    #             total_cost = moving_cost + cet_dist # total cost to move box to target
+    #             push_costs = push_costs + total_cost
+    #             misplaced.remove(heaviest) # Remove current (heaviest) box from misplaced_info
+
+    #         return (worker_costs + push_costs)
+    #     else:
+    #         return 0
+
+    
     def h(self, n):
         """
         Heuristic for goal state; the estimated movement cost
         """
+
+
+
+
         boxes = list(n.state[0])
         worker = list(n.state[1])
+        weights = self.problem.weights
+        targets = self.problem.targets
 
-        misplaced = [(element, i) for i, element in enumerate(boxes) if element not in self.problem.targets] # Get weights and indicies of misplaced boxes
-        if misplaced:
-            worker_costs = 0
-            for box in misplaced:
-                b_c = boxes[box[1]] # Retrieve corresponding box coordinates
-                distance = dist_calc(tuple(worker), b_c) - 1 # Get distance between worker and box -> distance
-                worker_costs = worker_costs + distance
-            
-            push_costs = 0
-            empty_targets = [(element, i) for i, element in enumerate(self.problem.targets) if element not in boxes]# Gets coordinates and index of empty targets
-            while misplaced and empty_targets:
-                heaviest = (max(misplaced, key = lambda t: t[0]))
-                heaviest_index = heaviest[1] # Get index of heaviest box
-                heaviest_box = boxes[heaviest_index] # Retrive coordinates of heaviest box
-                distance_between = [ (dist_calc(tuple(element[0]), heaviest_box), element[1]) for element, element in enumerate(empty_targets)]  # Calculate distance heaviest box to each target.
-                cet_info = min(distance_between, key = lambda t: t[0])
-                cet_dist = cet_info[0] # Get distance to closest target
-                cet_index = cet_info[1] # Get index of closest target
-                cet = self.problem.targets[cet_index], cet_index # Retrieve coordiantes and idnex of closest target
-                empty_targets.remove(cet) # Remove cet from empty_targets
-                moving_cost = cet_dist * self.problem.weights[heaviest_index] # weight cost of moving box to target
-                total_cost = cet_dist + moving_cost # total cost to move box to target
-                push_costs = push_costs + total_cost
-                misplaced.remove(heaviest) # Remove current (heaviest) box from misplaced_info
-            return worker_costs + (push_costs // 2)
-        else:
-            return 0
 
-            
+        misplaced = zip(boxes, weights) # Get position and weights of boxes not on targets
+        w_b = sum(manhattan(worker,box) for box, weight in misplaced)
+        print(w_b)
+        b_t = sum(manhattan(box,target) for box, weight in misplaced for target in targets)
+        print(b_t)
+        
+        print(min([(manhattan(B,T)) for B in misplaced for T in targets]))
+
+        
+        b_t = sum(min([(manhattan(B[0],T)) for B in misplaced for T in targets])) # Need to add distance from box to target
+        print(b_t)
+
+
+
+
+        # cost b_g + cost w_b
+    #     return 0
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def direction_push(something):
-    return -1
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-def dist_calc(co_1, co_2):
+def manhattan(co_1, co_2):
         """
         Calcualtes manhattan distance between two coordiante tuples
 
@@ -554,9 +581,10 @@ if __name__ == "__main__":
 
     wh = sokoban.Warehouse()
     # wh.load_warehouse("./warehouses/warehouse_01_a.txt")
+    # wh.load_warehouse("./warehouses/warehouse_07.txt")
     # wh.load_warehouse("./warehouses/warehouse_09.txt")
-    # wh.load_warehouse("./warehouses/warehouse_8a.txt")
-    wh.load_warehouse("./warehouses/warehouse_47.txt")
+    wh.load_warehouse("./warehouses/warehouse_8a.txt")
+    # wh.load_warehouse("./warehouses/warehouse_47.txt")
     # wh.load_warehouse("./warehouses/warehouse_57.txt")
 
 

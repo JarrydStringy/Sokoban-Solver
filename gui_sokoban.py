@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 
+import os
+import time
 import tkinter as tk
 from tkinter.filedialog import askopenfilename
-    
-import os
 
 from sokoban import Warehouse
 
 # Written by f.maire@qut.edu.au using icon images from Risto Stevcev.
 # Last modified on 2021/08/16
 
-import time
 
 __author__ = "Frederic Maire"
 __version__ = "2.0"
