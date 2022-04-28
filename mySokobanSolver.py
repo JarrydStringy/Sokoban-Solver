@@ -41,7 +41,6 @@ from sokoban import find_2D_iterator
 
 #from sqlalchemy import false, true
 
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -93,11 +92,10 @@ def taboo_cells(warehouse):
         else:
             return (vertWalls >= 1) and (horizWalls >= 1)
 
-    def Rule1(warehouse):
+    def Rule1(wh):
         """
         RULE 1: Check if a cell is a corner and not a target
         """
-        wh = warehouse
         for y in range(len(wh) - 1):            #Columns
             inside = False                      #Bool to check if inside or out
             for x in range(len(wh[0]) - 1):     #Rows
@@ -113,17 +111,16 @@ def taboo_cells(warehouse):
                                 wh[y][x] = taboo
         return wh
     
-    def Rule2(warehouse):
+    def Rule2(wh):
         """
         RULE 2: Check if there are any target cells between two corners
         """
-        wh = warehouse
         for x in range(1, len(wh) - 1):                     #Row
             for y in range(1, len(wh[0]) - 1):              #Col
                 if wh[x][y] == taboo and corner(wh, y, x):  #Needs to be inline with a corner
                     row = wh[x][y + 1:]
                     col = [row[y] for row in wh[x + 1:][:]]
-                    for xin in range(len(row)):              #Inner row
+                    for xin in range(len(row)):             #Inner row
                         if row[xin] in targets or row[xin] == wall:
                             break                           #Can't be a target or be a wall
                         if row[xin] == taboo and corner(wh, xin + y + 1, x):
@@ -131,7 +128,7 @@ def taboo_cells(warehouse):
                                 for xin2 in range(y + 1, xin + y + 1)]):
                                     for xin3 in range(y + 1, xin + y + 1):
                                         wh[x][xin3] = taboo
-                    for yin in range(len(col)):              #Inner col
+                    for yin in range(len(col)):             #Inner col
                         if col[yin] in targets or col[yin] == wall:
                             break                           #Can't be a target or be a wall
                         if col[yin] == taboo and corner(wh, y, yin + x + 1):
@@ -174,18 +171,6 @@ class SokobanPuzzle(search.Problem):
     the provided module 'search.py'.
 
     """
-
-    #
-    #         "INSERT YOUR CODE HERE"
-    #
-    #     Revisit the sliding puzzle and the pancake puzzle for inspiration!
-    #
-    #     Note that you will need to add several functions to
-    #     complete this class. For example, a 'result' method is needed
-    #     to satisfy the interface of 'search.Problem'.
-    #
-    #     You are allowed (and encouraged) to use auxiliary functions and classes
-
     def __init__(self, warehouse):
         assert len(warehouse.targets) >= len(warehouse.boxes) # Check there are enough targets for all boxes
         self.initial = tuple(warehouse.boxes), tuple(warehouse.worker)
@@ -258,44 +243,62 @@ class SokobanPuzzle(search.Problem):
             counter = counter + 1
         return c
 
+    #OLD_CODE
+    # def h(self, n):
+    #     """
+    #     Heuristic for goal state; the estimated movement cost
+    #     """
+    #     boxes = list(n.state[0])
+    #     worker = list(n.state[1])
+    #     combo = zip(boxes)
+
+    #     misplaced = [(element, i) for i, element in enumerate(boxes) if element not in self.problem.targets] # Get weights and indicies of misplaced boxes
+    #     if misplaced:
+    #         worker_costs = 0
+    #         for box in misplaced:
+    #             b_c = boxes[box[1]] # Retrieve corresponding box coordinates
+    #             distance = dist_calc(tuple(worker), b_c) - 1 # Get distance between worker and box -> distance
+    #             worker_costs = worker_costs + distance
+            
+    #         push_costs = 0
+    #         empty_targets = [(element, i) for i, element in enumerate(self.problem.targets) if element not in boxes]# Gets coordinates and index of empty targets
+    #         while misplaced and empty_targets:
+    #             heaviest = (max(misplaced, key = lambda t: t[0]))
+    #             heaviest_index = heaviest[1] # Get index of heaviest box
+    #             heaviest_box = boxes[heaviest_index] # Retrive coordinates of heaviest box
+    #             distance_between = [ (dist_calc(tuple(element[0]), heaviest_box), element[1]) for element, element in enumerate(empty_targets)]  # Calculate distance heaviest box to each target.
+    #             cet_info = min(distance_between, key = lambda t: t[0])
+    #             cet_dist = cet_info[0] # Get distance to closest target
+    #             cet_index = cet_info[1] # Get index of closest target
+    #             cet = self.problem.targets[cet_index], cet_index # Retrieve coordiantes and index of closest target
+    #             empty_targets.remove(cet) # Remove cet from empty_targets
+    #             moving_cost = cet_dist * self.problem.weights[heaviest_index] # weight cost of moving box to target
+    #             total_cost = cet_dist + moving_cost # total cost to move box to target
+    #             push_costs = push_costs + total_cost
+    #             misplaced.remove(heaviest) # Remove current (heaviest) box from misplaced_info
+    #         return worker_costs + (push_costs // 2)
+    #     else:
+    #         return 0
 
     def h(self, n):
-        """
-        Heuristic for goal state; the estimated movement cost
-        """
-        boxes = list(n.state[0])
-        worker = list(n.state[1])
-
-        misplaced = [(element, i) for i, element in enumerate(boxes) if element not in self.problem.targets] # Get weights and indicies of misplaced boxes
-        if misplaced:
-            worker_costs = 0
-            for box in misplaced:
-                b_c = boxes[box[1]] # Retrieve corresponding box coordinates
-                distance = dist_calc(tuple(worker), b_c) - 1 # Get distance between worker and box -> distance
-                worker_costs = worker_costs + distance
+            """
+            Heuristic for goal state; the estimated movement cost
+            """
+            boxes = list(n.state[0])
+            targets = list(self.problem.targets)
+            worker = list(n.state[1])
+            weight = zip(n.state[0], self.problem.weights)
             
-            push_costs = 0
-            empty_targets = [(element, i) for i, element in enumerate(self.problem.targets) if element not in boxes]# Gets coordinates and index of empty targets
-            while misplaced and empty_targets:
-                heaviest = (max(misplaced, key = lambda t: t[0]))
-                heaviest_index = heaviest[1] # Get index of heaviest box
-                heaviest_box = boxes[heaviest_index] # Retrive coordinates of heaviest box
-                distance_between = [ (dist_calc(tuple(element[0]), heaviest_box), element[1]) for element, element in enumerate(empty_targets)]  # Calculate distance heaviest box to each target.
-                cet_info = min(distance_between, key = lambda t: t[0])
-                cet_dist = cet_info[0] # Get distance to closest target
-                cet_index = cet_info[1] # Get index of closest target
-                cet = self.problem.targets[cet_index], cet_index # Retrieve coordiantes and idnex of closest target
-                empty_targets.remove(cet) # Remove cet from empty_targets
-                moving_cost = cet_dist * self.problem.weights[heaviest_index] # weight cost of moving box to target
-                total_cost = cet_dist + moving_cost # total cost to move box to target
-                push_costs = push_costs + total_cost
-                misplaced.remove(heaviest) # Remove current (heaviest) box from misplaced_info
-            return worker_costs + (push_costs // 2)
-        else:
-            return 0
-
+            sum = 0
             
+            for box, weight in weight:
+                b_t = [dist_calc(box, target) for target, target in enumerate(targets)]
+                sum = sum + min(b_t) + (min(b_t)*weight)
 
+            w_b = [dist_calc(worker, box) for box, box in enumerate(boxes)]
+            sum = sum + min(w_b) - 1
+            
+            return sum
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def direction_push(something):
@@ -469,7 +472,6 @@ def binary_tuple_search(target, list):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
 def check_elem_action_seq(warehouse, action_seq):
     """
     Determine if the sequence of actions listed in 'action_seq' is legal or not.
@@ -502,7 +504,6 @@ def check_elem_action_seq(warehouse, action_seq):
             warehouse.worker = new_state[1]
     # Return string representing state of warehouse after applying sequence of actions
     return warehouse.__str__()
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -546,9 +547,7 @@ def solve_weighted_sokoban(warehouse):
         return S, C
     return "impossible", None
 
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 
 if __name__ == "__main__":
 
