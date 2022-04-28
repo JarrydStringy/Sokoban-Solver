@@ -30,9 +30,11 @@ import time
 # the files provided (search.py and sokoban.py) as your code will be tested
 # with these files
 from asyncore import read
+from calendar import different_locale
 from math import floor
 
 from matplotlib.pyplot import box
+from numpy import sometrue
 
 import search
 import sokoban
@@ -200,9 +202,6 @@ class SokobanPuzzle(search.Problem):
         """
         L = []  # list of actions that can be taken
 
-        if state == (((3, 3), (4, 2), (4, 3)),  (3,2)):  ### DELETE BEFORE SUBMISSION ###
-            print("pause")
-
         if legal_check(self.problem, state, 'Up') != 'Impossible':
             if taboo_check(self.taboo, state, 'Up') != 'tabboo': 
                 L.append('Up')
@@ -250,7 +249,7 @@ class SokobanPuzzle(search.Problem):
         assert len(boxes_old) == len(boxes_new)
         counter = 0
         while counter < len(boxes_old):
-            diff = dist_calc(boxes_old[counter], boxes_new[counter])
+            diff = manhattan(boxes_old[counter], boxes_new[counter])
             if diff > 0:
                 weight = self.problem.weights[counter]
                 box_push = diff * weight
@@ -259,75 +258,26 @@ class SokobanPuzzle(search.Problem):
         return c
 
 
-    # def h(self, n):
-    #     """
-    #     Heuristic for goal state; the estimated movement cost
-    #     """
-    #     boxes = list(n.state[0])
-    #     worker = list(n.state[1])
-
-    #     misplaced = [(element, i) for i, element in enumerate(boxes) if element not in self.problem.targets] # Get weights and indicies of misplaced boxes
-    #     if misplaced:
-    #         worker_costs = 0
-    #         for box in misplaced:
-    #             b_c = boxes[box[1]] # Retrieve corresponding box coordinates
-    #             distance = manhattan(tuple(worker), b_c) - 1 # Get distance between worker and box -> distance
-    #             worker_costs = worker_costs + distance
-            
-    #         push_costs = 0
-    #         empty_targets = [(element, i) for i, element in enumerate(self.problem.targets) if element not in boxes]# Gets coordinates and index of empty targets
-    #         while misplaced and empty_targets:
-    #             heaviest = (max(misplaced, key = lambda t: t[0]))
-    #             heaviest_index = heaviest[1] # Get index of heaviest box
-    #             heaviest_box = boxes[heaviest_index] # Retrive coordinates of heaviest box
-    #             distance_between = [ (manhattan(tuple(element[0]), heaviest_box), element[1]) for element, element in enumerate(empty_targets)]  # Calculate distance heaviest box to each target.
-    #             cet_info = min(distance_between, key = lambda t: t[0])
-    #             cet_dist = cet_info[0] # Get distance to closest target
-    #             cet_index = cet_info[1] # Get index of closest target
-    #             cet = self.problem.targets[cet_index], cet_index # Retrieve coordiantes and idnex of closest target
-    #             empty_targets.remove(cet) # Remove cet from empty_targets # Retain avaliablity for other boxes
-    #             moving_cost = cet_dist * self.problem.weights[heaviest_index] # weight cost of moving box to target
-    #             total_cost = moving_cost + cet_dist # total cost to move box to target
-    #             push_costs = push_costs + total_cost
-    #             misplaced.remove(heaviest) # Remove current (heaviest) box from misplaced_info
-
-    #         return (worker_costs + push_costs)
-    #     else:
-    #         return 0
-
-    
     def h(self, n):
         """
         Heuristic for goal state; the estimated movement cost
         """
-
-
-
-
         boxes = list(n.state[0])
+        targets = list(self.problem.targets)
         worker = list(n.state[1])
-        weights = self.problem.weights
-        targets = self.problem.targets
-
-
-        misplaced = zip(boxes, weights) # Get position and weights of boxes not on targets
-        w_b = sum(manhattan(worker,box) for box, weight in misplaced)
-        print(w_b)
-        b_t = sum(manhattan(box,target) for box, weight in misplaced for target in targets)
-        print(b_t)
+        box_weight = zip(n.state[0], self.problem.weights)
         
-        print(min([(manhattan(B,T)) for B in misplaced for T in targets]))
+        sum = 0
+        for box, weight in box_weight:
+            b_t = [manhattan(box, target) for target, target in enumerate(targets)]
+            sum = sum + min(b_t) + (min(b_t)*weight)
 
+
+        w_b = [manhattan(worker, box) for box, box in enumerate(boxes)]
+        sum = sum + min(w_b) - 1
+
+        return sum
         
-        b_t = sum(min([(manhattan(B[0],T)) for B in misplaced for T in targets])) # Need to add distance from box to target
-        print(b_t)
-
-
-
-
-        # cost b_g + cost w_b
-    #     return 0
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def manhattan(co_1, co_2):
@@ -338,9 +288,8 @@ def manhattan(co_1, co_2):
 
         @param co_2: second coordinate tuple 
         """
-        manhattan = (abs(co_1[0] - co_2[0]) +
-                     abs(co_1[1] - co_2[1]))
-        return manhattan
+        distance = abs(co_1[0] - co_2[0]) + abs(co_1[1] - co_2[1])
+        return distance
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
