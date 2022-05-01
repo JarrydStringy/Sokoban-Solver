@@ -1,3 +1,4 @@
+
 """
 
     Sokoban assignment
@@ -25,22 +26,11 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 
 """
 
-import time
 # You have to make sure that your code works with
 # the files provided (search.py and sokoban.py) as your code will be tested
 # with these files
-from asyncore import read
-from math import floor
-
-from matplotlib.pyplot import box
-
 import search
 import sokoban
-from search import astar_graph_search
-from sokoban import find_2D_iterator
-
-#from sqlalchemy import false, true
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
