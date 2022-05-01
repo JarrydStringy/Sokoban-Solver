@@ -229,7 +229,6 @@ class SokobanPuzzle(search.Problem):
         @param state: The current state of the warehouse
         @param action: a list of actions
 
-
         Return:
          The state that results from executing the given
          action in the given state. The action must be one of
@@ -304,7 +303,7 @@ class SokobanPuzzle(search.Problem):
         @param n: n parameter
 
         Returns:
-            Int representing the total distance calculated
+            Int representing the estimated remaining cost to reach goal state from current state
         """
         boxes = list(n.state[0])
         targets = list(self.problem.targets)
@@ -316,8 +315,7 @@ class SokobanPuzzle(search.Problem):
 
         # Calculating the distance between the targets and the boxes with there weights
         for box, weight in weight:
-            b_t = [manhattan(box, target)
-                   for target, target in enumerate(targets)]
+            b_t = [manhattan(box, target) for target, target in enumerate(targets)]
             dist_sum = dist_sum + min(b_t) + (min(b_t)*weight)
 
         # Calculates the distance from the worker and the boxes
@@ -339,7 +337,7 @@ def manhattan(co_1, co_2):
     @param co_2: second coordinate tuple 
 
     Return:
-        Cost of final distance    
+        Absolute distance between two coordinates    
     """
 
     manhattan = (abs(co_1[0] - co_2[0]) +
@@ -351,9 +349,8 @@ def manhattan(co_1, co_2):
 
 def calculate_move(state, move):
     """
-    Calculates the two tiles in the direction of a given move ('Up', 'Down', 'Left', 'Right')
+    Calculates the tiles to consider in the direction of a given move ('Up', 'Down', 'Left', 'Right')
 
-   
     @param State: The current state of the warehouse
     @param move: The next move of the worker
 
@@ -387,7 +384,7 @@ def taboo_calc(warehouse):
     """
     finds coordinates of taboo cells in warehouse
 
-    @param return: returns list of tuple coordinates of taboo cell locaitons in warehouse e.g. [(3,5), (7,2), (8,4)]
+    @param return: returns list of tuple coordinates of taboo cell locations in warehouse e.g. [(3,5), (7,2), (8,4)]
     """
     wh = taboo_cells(warehouse)
     lines = wh.split(sep="\n")
@@ -399,9 +396,13 @@ def taboo_calc(warehouse):
 
 def taboo_check(taboo_locations, state, move):
     """
-    checks if pushing box into taboo cell
+    checks if given move pushes box into taboo cell
 
     @param tabboo_locations: coordiantes of taboo cells e.g. [(3,5), (7,2), (8,4)]
+
+    @param state: current state of problem
+
+    @param move: move to be executed from given state
 
     @param return: 'tabboo' if moving box into tabboo cell
     """
@@ -437,6 +438,8 @@ def legal_check(warehouse, state, move):
     @param state: a state of the warehouse object
 
     @param move: a move to check
+
+    @param return: 'Impossible' if move does not satisfy all legal conditions
     """
 
     explore_tile, explore_more = calculate_move(state, move)
@@ -475,16 +478,13 @@ def make_move(state, move):
     # For all boxes in current state, if any (boxes) are on the first tile infront of
     # the worker, add to list of obstrucitons # Check if tile in front of worker has box on it
 
-    push = [(element, i)
-            for i, element in enumerate(boxes) if element == explore_tile]
+    push = [(element, i) for i, element in enumerate(boxes) if element == explore_tile]
 
-    # If tile in front of worker has box
+    # If box in front of worker
     if len(push) != 0:
-
-        # Push box: Replace explore_tile with explore_more
-        boxes[push[0][1]] = explore_more
+        boxes[push[0][1]] = explore_more # Push box
         
-    worker = explore_tile  # move worker forward
+    worker = explore_tile  # Move worker forward
     return tuple(boxes), tuple(worker)
 
 
@@ -495,7 +495,7 @@ def binary_tuple_search(target, list):
     """
     WARNING: ONLY USE FOR STATIC SORTED LISTS (E.G. WALLS, TARGETS)
 
-    Binary Tuple Search (More efficiently searches for a given tuple in a LARGE, STATIC, ALWAYS SORTED list of tuples such as walls)
+    Binary Tuple Search (More efficiently searches for a given tuple in a large, sorted list of tuples such as walls)
 
     @param target: a coordinate tuple E.g. (4,0)
 
@@ -604,69 +604,5 @@ def solve_weighted_sokoban(warehouse):
 if __name__ == "__main__":
 
     wh = sokoban.Warehouse()
-    # wh.load_warehouse("./warehouses/warehouse_01_a.txt")
-    # wh.load_warehouse("./warehouses/warehouse_07.txt")
-    # wh.load_warehouse("./warehouses/warehouse_09.txt")
-    wh.load_warehouse("./warehouses/warehouse_8a.txt")
-    # wh.load_warehouse("./warehouses/warehouse_47.txt")
-    # wh.load_warehouse("./warehouses/warehouse_57.txt")
-
+    wh.load_warehouse("./warehouses/warehouse_155.txt")
     solve_weighted_sokoban(wh)
-
-    ##### check_elem_action_seq TEST #####
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Up']
-    # print(check_elem_action_seq(wh, sequence)) # Illegal (Hits wall)
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Down']
-    # print(check_elem_action_seq(wh, sequence)) # Illegal (Hits wall)
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Left']
-    # print(check_elem_action_seq(wh, sequence)) # Illegal (Hits wall)
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Right', 'Right']
-    # print(check_elem_action_seq(wh, sequence)) # Illegal (Hits wall)
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Right', 'Up', 'Up', 'Left', 'Left', 'Left', 'Down', 'Down', 'Left', 'Left', 'Left', 'Up', 'Up', 'Right', 'Right', 'Up', 'Right', 'Down', 'Down']
-    # print(check_elem_action_seq(wh, sequence)) # Legal (Push box to target)
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Right', 'Up', 'Up', 'Left', 'Left', 'Left', 'Down', 'Left', 'Up']
-    # print(check_elem_action_seq(wh, sequence)) # Legal (Push box up test)
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Right', 'Up', 'Up', 'Left', 'Left', 'Left', 'Down', 'Left', 'Up', 'Up', 'Up', 'Up']
-    # print(check_elem_action_seq(wh, sequence)) # Illegal (Push box UP into wall)
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Right']
-    # print(check_elem_action_seq(wh, sequence))  # Legal (Move to empty space)
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Right', 'Up', 'Up', 'Left', 'Left', 'Left', 'Down', 'Down', 'Left', 'Left', 'Left', 'Up', 'Up', 'Right', 'Right', 'Up', 'Right', 'Down', 'Down', 'Down']
-    # print(check_elem_action_seq(wh, sequence)) # Illegal (Push box DOWN into wall)
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Right', 'Up', 'Up', 'Left', 'Left', 'Left', 'Left', 'Left', 'Left', 'Left', 'Left', 'Left']
-    # print(check_elem_action_seq(wh, sequence)) # Illegal (Push box LEFT into wall)
-
-    # wh.load_warehouse("./warehouses/warehouse_03.txt")
-    # sequence = ['Right', 'Up', 'Up', 'Left', 'Left', 'Left', 'Down', 'Down', 'Left', 'Left', 'Left', 'Up', 'Up', 'Right', 'Right', 'Right', 'Right', 'Right', 'Right', 'Right', 'Right']
-    # print(check_elem_action_seq(wh, sequence)) # Illegal (Push box RIGHT into wall)
-
-    ###
-    # Conditions NOT tested:
-    #   - Pushing two boxes in any direction
-    ###
-
-    ##### check_elem_action_seq TEST #####
-
-    ##### Weight Box Experiment #####
-    # wh.load_warehouse("./warehouses/warehouse_8a.txt")
-    # sequence = ['Right']
-    # print(check_elem_action_seq(wh, sequence))  # Legal (Move to empty space)
