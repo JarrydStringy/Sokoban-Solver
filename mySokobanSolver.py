@@ -379,7 +379,7 @@ def taboo_calc(warehouse):
     wh = taboo_cells(warehouse)
     lines = wh.split(sep="\n")
 
-    return list(find_2D_iterator(lines, "X"))
+    return list(sokoban.find_2D_iterator(lines, "X"))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -578,7 +578,7 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
     """
     sp = SokobanPuzzle(warehouse)
-    sol_ts = astar_graph_search(sp)  # graph search version
+    sol_ts = search.astar_graph_search(sp)  # graph search version
     if sol_ts:
         S = trace_path(sol_ts)  # trace path to solution node
         C = sol_ts.path_cost
